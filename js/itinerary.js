@@ -15,6 +15,8 @@ const HOTEL = { lat: 37.77400, lng: 128.94500, approx: true };   // 안목해변
 const ITINERARY = {
   id: "gangneung",
   storageKey: "gangneung-diary",
+  // 사진·기록을 기기 간에 공유하는 서버 주소. 비우면("") 브라우저 안(IndexedDB)에만 저장한다.
+  server: "https://parking.tail7d1054.ts.net:8443",
   title: "강릉여행",
   brand: "Gangneung Diary",
   seal: "",   // 오른쪽 위 붉은 도장 글자. 비우면 숨겨진다 (예: "江陵")

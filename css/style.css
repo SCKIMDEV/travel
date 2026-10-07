@@ -399,3 +399,6 @@ h1, h2, h3, p { margin: 0; }
   .note { border-bottom-color: transparent; }
   .timeline { overflow: visible; }
 }
+
+/* 저장 실패 표시 */
+.save-state.is-error { color: var(--red); }

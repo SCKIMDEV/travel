@@ -17,6 +17,21 @@
   const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
+  // 저장소: itinerary.js 의 server 주소(또는 ?server= 쿼리)가 있으면 서버, 없으면 브라우저 IndexedDB
+  // ?server= 덮어쓰기는 로컬 테스트용. 공개 주소에서는 무시한다 (가짜 서버 링크로 비밀번호를 가로채지 못하도록).
+  const LOCAL_HOST = ['localhost', '127.0.0.1', '[::1]', ''].includes(location.hostname);
+  const SERVER = (LOCAL_HOST && new URLSearchParams(location.search).get('server')) || ITINERARY.server || '';
+  const REMOTE = !!SERVER && typeof RemoteStore !== 'undefined';
+  if (REMOTE) RemoteStore.configure(SERVER, ITINERARY.id || 'trip');
+  const STORE = REMOTE ? RemoteStore : DB;
+  const toBlob = async x => {   // 서버 모드에서는 URL 을 받아온다
+    if (x instanceof Blob) return x;
+    const res = await fetch(x);
+    if (!res.ok) throw new Error(`사진을 받지 못했어요 (${res.status})`);
+    return res.blob();
+  };
+  let serverError = '';   // 서버 모드에서 서버에 닿지 못했을 때의 안내 문구
+
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -128,7 +143,7 @@
 
   // ---------- 데이터 로드 ----------
   async function loadData() {
-    const [photos, ents] = await Promise.all([DB.getAllPhotos(), DB.getAllEntries()]);
+    const [photos, ents] = await Promise.all([STORE.getAllPhotos(), STORE.getAllEntries()]);
     photosByStop.clear();
     entries.clear();
     photos.forEach(p => {
@@ -153,13 +168,13 @@
   function urlFor(photo, kind) {
     let u = urls.get(photo.id);
     if (!u) { u = {}; urls.set(photo.id, u); }
-    if (!u[kind]) u[kind] = URL.createObjectURL(photo[kind]);
+    if (!u[kind]) u[kind] = typeof photo[kind] === 'string' ? photo[kind] : URL.createObjectURL(photo[kind]);
     return u[kind];
   }
   function revokeUrls(id) {
     const u = urls.get(id);
     if (!u) return;
-    Object.values(u).forEach(x => URL.revokeObjectURL(x));
+    Object.values(u).forEach(x => { if (x.startsWith('blob:')) URL.revokeObjectURL(x); });
     urls.delete(id);
   }
   function stopName(id) { const s = stopIndex.get(id); return s ? s.stop.name : ''; }
@@ -196,13 +211,16 @@
     photosByStop.forEach(l => { photos += l.length; });
     let notes = 0;
     entries.forEach(e => { if (e.note && e.note.trim()) notes++; });
-    $('#hero-stats').textContent = (photos || notes)
-      ? `사진 ${photos}장 · 기록 ${notes}개`
-      : '아직 담긴 추억이 없어요. 사진과 기록을 남겨보세요.';
+    $('#hero-stats').textContent = serverError
+      ? `⚠ 사진 서버에 연결할 수 없어요. ${serverError}`
+      : (photos || notes)
+        ? `사진 ${photos}장 · 기록 ${notes}개`
+        : '아직 담긴 추억이 없어요. 사진과 기록을 남겨보세요.';
     updateStorage();
   }
   async function updateStorage() {
     const el = $('#foot-storage');
+    if (REMOTE) { el.textContent = `SERVER ${SERVER.replace(/^https?:\/\//, '')}`; return; }
     if (!navigator.storage || !navigator.storage.estimate) { el.textContent = ''; return; }
     try {
       const { usage = 0 } = await navigator.storage.estimate();
@@ -219,27 +237,31 @@
     saveTimers.set(id, setTimeout(async () => {
       saveTimers.delete(id);
       try {
-        await DB.putEntry(next);
+        await STORE.putEntry(next);
         flashSaved(statusEl);
       } catch (err) {
         console.error(err);
-        toast('저장에 실패했어요');
+        toast(`저장에 실패했어요: ${err.message || ''}`, 5000);
+        if (statusEl) { statusEl.textContent = 'NOT SAVED'; statusEl.classList.add('is-visible', 'is-error'); }
+        return;
       }
       if (stopIndex.has(id)) updateDot(id);
       updateStats();
     }, 400));
   }
   function flushSaves() {
+    if (REMOTE && !RemoteStore.hasKey) { saveTimers.clear(); return; }   // 떠나는 순간에 비밀번호를 물을 수는 없다
     saveTimers.forEach((t, id) => {
       clearTimeout(t);
       const e = entries.get(id);
-      if (e) DB.putEntry(e).catch(() => {});
+      if (e) STORE.putEntry(e).catch(() => {});
     });
     saveTimers.clear();
   }
   function flashSaved(el) {
     if (!el) return;
     el.textContent = 'SAVED';
+    el.classList.remove('is-error');
     el.classList.add('is-visible');
     clearTimeout(el._t);
     el._t = setTimeout(() => el.classList.remove('is-visible'), 1600);
@@ -308,6 +330,7 @@
   // ---------- 사진 추가 ----------
   async function addFiles(stopId, fileList) {
     if (!stopIndex.has(stopId)) return;
+    if (serverError) { toast(`사진 서버에 연결할 수 없어 올릴 수 없어요. ${serverError}`, 5000); return; }
     const files = Array.from(fileList || []).filter(f => f.type.startsWith('image/') || /\.(heic|heif)$/i.test(f.name));
     if (!files.length) { toast('이미지 파일만 추가할 수 있어요'); return; }
     toast(`사진 ${files.length}장을 정리하는 중…`, 0);
@@ -315,23 +338,23 @@
     let order = list.length ? Math.max(...list.map(p => p.order)) + 1 : 1;
     let ok = 0;
     const failed = [];
+    let uploadError = '';
     for (const file of files) {
-      try {
-        const img = await processImage(file);
-        const photo = { id: uid(), stopId, order: order++, caption: '', createdAt: Date.now(), name: file.name, ...img };
-        await DB.putPhoto(photo);
-        list.push(photo);
-        ok++;
-      } catch (err) {
-        console.warn('사진 처리 실패:', file.name, err);
-        failed.push(file.name);
-      }
+      let img;
+      try { img = await processImage(file); }
+      catch (err) { console.warn('사진 변환 실패:', file.name, err); failed.push(file.name); continue; }
+      const photo = { id: uid(), stopId, order: order++, caption: '', createdAt: Date.now(), name: file.name, ...img };
+      try { await STORE.putPhoto(photo); }
+      catch (err) { console.error('사진 저장 실패:', file.name, err); uploadError = err.message || '저장 실패'; break; }
+      list.push(photo);
+      ok++;
     }
     photosByStop.set(stopId, list);
     renderPhotos(stopId);
     updateDot(stopId);
     updateStats();
-    if (failed.length) toast(`${ok}장 추가 · ${failed.length}장은 열 수 없었어요 (HEIC 등 미지원 형식)`, 4500);
+    if (uploadError) toast(`${ok}장 추가 후 ${REMOTE ? '서버에 올리지' : '저장하지'} 못했어요: ${uploadError}`, 6000);
+    else if (failed.length) toast(`${ok}장 추가 · ${failed.length}장은 열 수 없었어요 (HEIC 등 미지원 형식)`, 4500);
     else toast(`사진 ${ok}장을 추가했어요`);
   }
 
@@ -387,7 +410,7 @@
     if (v === (p.caption || '')) return;
     p.caption = v;
     try {
-      await DB.putPhoto(p);
+      await STORE.putPhoto(p);
       renderPhotos(lightbox.stopId);
       toast('사진 설명을 저장했어요');
     } catch (err) { console.error(err); toast('저장에 실패했어요'); }
@@ -401,7 +424,7 @@
     list.splice(j, 0, p);
     list.forEach((x, k) => { x.order = k + 1; });
     try {
-      await DB.putPhotos(list);
+      await STORE.putPhotos(list);
       lightbox.index = j;
       renderPhotos(lightbox.stopId);
       showLightbox();
@@ -412,7 +435,7 @@
     if (!p) return;
     if (!confirm('이 사진을 삭제할까요? 되돌릴 수 없어요.')) return;
     try {
-      await DB.deletePhoto(p.id);
+      await STORE.deletePhoto(p.id);
     } catch (err) { console.error(err); toast('삭제에 실패했어요'); return; }
     const list = photosByStop.get(lightbox.stopId) || [];
     list.splice(list.indexOf(p), 1);
@@ -423,12 +446,12 @@
     if (!list.length) closeLightbox(); else showLightbox();
     toast('사진을 삭제했어요');
   }
-  function downloadCurrent() {
+  async function downloadCurrent() {
     const p = currentPhoto();
     if (!p) return;
     const s = stopIndex.get(lightbox.stopId);
     const name = `${s.day.label.replace(/\s+/g, '')}-${pad2(s.n)}-${stopName(lightbox.stopId)}-${pad2(lightbox.index + 1)}.jpg`;
-    downloadBlob(p.full, name);
+    try { downloadBlob(await toBlob(p.full), name); } catch (err) { console.error(err); toast('사진을 내려받지 못했어요'); }
   }
   function downloadBlob(blob, name) {
     const a = document.createElement('a');
@@ -664,7 +687,7 @@
   async function exportBackup() {
     try {
       toast('백업 파일을 만드는 중…', 0);
-      const [photos, ents, meta] = await Promise.all([DB.getAllPhotos(), DB.getAllEntries(), DB.getAllMeta()]);
+      const [photos, ents, meta] = await Promise.all([STORE.getAllPhotos(), STORE.getAllEntries(), STORE.getAllMeta()]);
       // 사진이 많아도 거대한 문자열 하나를 만들지 않도록 조각으로 이어 붙인다.
       const parts = [`{"app":"travel-diary","trip":${JSON.stringify(ITINERARY.id || '')},"version":1,"exportedAt":${JSON.stringify(new Date().toISOString())},"entries":${JSON.stringify(ents)},"meta":[`];
       for (let i = 0; i < meta.length; i++) {
@@ -673,17 +696,21 @@
         parts.push((i ? ',' : '') + JSON.stringify(item));
       }
       parts.push('],"photos":[');
-      for (let i = 0; i < photos.length; i++) {
-        const p = photos[i];
-        const item = { ...p, full: await readAsDataURL(p.full), thumb: await readAsDataURL(p.thumb) };
-        parts.push((i ? ',' : '') + JSON.stringify(item));
+      let written = 0;
+      const skipped = [];
+      for (const p of photos) {
+        let item;
+        try { item = { ...p, full: await readAsDataURL(await toBlob(p.full)), thumb: await readAsDataURL(await toBlob(p.thumb)) }; }
+        catch (err) { console.warn('백업에서 건너뜀:', p.id, err); skipped.push(p.id); continue; }
+        parts.push((written++ ? ',' : '') + JSON.stringify(item));
       }
       parts.push(']}');
+      if (!written && photos.length) throw new Error('사진을 한 장도 받지 못했어요');
       downloadBlob(new Blob(parts, { type: 'application/json' }), `${ITINERARY.id || 'travel'}-diary-${stamp()}.json`);
-      toast(`백업 파일을 저장했어요 (사진 ${photos.length}장)`);
+      toast(skipped.length ? `백업 파일을 저장했어요 (사진 ${written}장, ${skipped.length}장은 받지 못해 제외)` : `백업 파일을 저장했어요 (사진 ${written}장)`, skipped.length ? 6000 : 2200);
     } catch (err) {
       console.error(err);
-      toast('백업에 실패했어요');
+      toast(`백업에 실패했어요: ${err.message || ''}`, 5000);
     }
   }
   async function importBackup(file) {
@@ -696,17 +723,21 @@
         !confirm(`다른 여행("${trip}")의 백업이에요. 장소 id 가 다르면 사진이 보이지 않고, 숙소처럼 id 가 겹치면 엉뚱한 카드에 붙을 수 있어요.\n그래도 불러올까요?`)) return;
     const n = data.photos.length;
     const m = (data.entries || []).length;
-    if (!confirm(`백업을 불러오면 지금 저장된 사진과 기록이 모두 이 파일의 내용으로 바뀝니다.\n(사진 ${n}장, 기록 ${m}개)\n\n계속할까요?`)) return;
+    const isImage = v => typeof v === 'string' && /^data:image\//.test(v);
+    if (!data.photos.every(p => p && typeof p.id === 'string' && isImage(p.full) && isImage(p.thumb))) { toast('백업 파일에 깨진 사진 항목이 있어 불러오지 않았어요'); return; }
+    const where = REMOTE ? '서버에 저장된 사진과 기록이 모든 기기에서' : '지금 저장된 사진과 기록이';
+    if (!confirm(`백업을 불러오면 ${where} 이 파일의 내용으로 바뀝니다.\n(사진 ${n}장, 기록 ${m}개)\n\n계속할까요?`)) return;
     try {
       toast('백업을 불러오는 중…', 0);
       const photos = data.photos.map(p => ({ ...p, full: dataUrlToBlob(p.full), thumb: dataUrlToBlob(p.thumb) }));
       const meta = (data.meta || []).map(x => (x.blob ? { ...x, blob: dataUrlToBlob(x.blob) } : x));
-      await DB.replaceAll({ photos, entries: data.entries || [], meta });
+      await STORE.replaceAll({ photos, entries: data.entries || [], meta });
       await reload();
       toast(`백업을 불러왔어요 (사진 ${n}장)`);
     } catch (err) {
       console.error(err);
-      toast('불러오기에 실패했어요');
+      toast(`불러오기에 실패했어요: ${err.message || ''}`, 6000);
+      try { await reload(); } catch { /* 서버 상태를 다시 읽지 못함 */ }
     }
   }
   async function reload() {
@@ -861,6 +892,10 @@
 
   // ---------- 시작 ----------
   async function init() {
+    const note = $('#foot-note');
+    if (note) note.innerHTML = REMOTE
+      ? '사진과 기록은 <strong>서버(PC)</strong> 에 저장되어 어느 기기에서 열어도 같은 내용이 보입니다. 비밀번호는 이 기기에 기억됩니다.'
+      : '모든 사진과 기록은 이 브라우저 안(IndexedDB)에만 저장됩니다. 가끔 <strong>백업 저장</strong>으로 파일을 남겨 두세요.';
     buildStatic();
     bindEvents();
     setupNavHighlight();
@@ -868,14 +903,17 @@
       await loadData();
     } catch (err) {
       console.error(err);
-      toast('브라우저 저장소를 열 수 없어요. 시크릿 모드이거나 저장소가 차단된 것 같아요.', 0);
+      if (REMOTE) serverError = err.message || '';
+      toast(REMOTE
+        ? `사진 서버에 연결할 수 없어요 (${err.message}). 서버 PC 가 켜져 있는지, 비밀번호가 맞는지 확인해 주세요.`
+        : '브라우저 저장소를 열 수 없어요. 시크릿 모드이거나 저장소가 차단된 것 같아요.', 0);
     }
     renderAll();
     initMap();   // 온라인일 때만 지도가 뜬다. 실패해도 나머지는 그대로 동작.
   }
 
   // 콘솔/테스트용
-  window.TravelDiary = { addFiles, exportBackup, importBackup, locate, setActiveDay, reload };
+  window.TravelDiary = { addFiles, exportBackup, importBackup, locate, setActiveDay, reload, remote: REMOTE, forgetKey: () => { if (REMOTE) RemoteStore.forgetKey(); } };
 
   init();
 })();
