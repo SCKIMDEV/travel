@@ -14,18 +14,13 @@ python -m http.server 8765
 
 그 다음 http://localhost:8765 로 접속합니다.
 
-## 다른 기기에서 열기 (Tailscale)
+## 공유 주소 (GitHub Pages)
 
-이 PC(parking)에서 Docker 컨테이너(nginx)로 사이트를 띄우고, Tailscale Serve 로 테일넷 안에서만 열리는 주소를 붙여 두었습니다. parking 앱과 같은 구조입니다.
+이 저장소의 `main` 브랜치가 GitHub Pages 로 그대로 공개됩니다.
 
-- 주소: **https://parking.tail7d1054.ts.net:8443/** (같은 Tailscale 계정으로 로그인한 기기에서만 열림. 인터넷 공개(Funnel) 아님)
-- 서버: `compose.yaml` 의 `travel-diary` 컨테이너가 127.0.0.1:8787 에서 이 폴더를 그대로 서빙합니다. `restart: unless-stopped` 라 Docker Desktop 이 켜지면 같이 올라옵니다.
-  - 시작/중지: `docker compose up -d` / `docker compose down` (이 폴더에서)
-  - 파일을 고치면 바로 반영됩니다 (캐시 없음).
-- Tailscale 설정 확인/해제: `tailscale serve status` / `tailscale serve --https=8443 off`
-- Docker 없이 급하게 띄울 때: `serve.cmd` 더블클릭 (같은 포트 8787, Python 내장 서버)
-- 휴대폰에서는 Tailscale 앱을 켠 상태에서 위 주소를 열면 됩니다.
-- 주의: 사진과 기록은 **그 기기의 브라우저 안**에 저장됩니다. 휴대폰에서 넣은 사진은 PC 브라우저에 자동으로 나타나지 않으니, 백업 저장 → 불러오기로 옮기세요.
+- 주소: **https://sckimdev.github.io/travel/**
+- 파일을 고쳐서 `main` 에 push 하면 1~2분 안에 반영됩니다.
+- 주의: 사진과 기록은 **여는 기기의 브라우저 안**에 저장됩니다. 휴대폰에서 넣은 사진은 PC 브라우저에 자동으로 나타나지 않으니, 백업 저장 → 불러오기로 옮기세요. 공개 주소라도 사진·기록은 외부로 올라가지 않습니다.
 
 ## 기능
 
@@ -99,7 +94,5 @@ js/itinerary.js        현재 여행 일정 데이터 (강릉)
 js/itinerary.tokyo.js  도쿄 일정 (보관용)
 js/db.js               IndexedDB 래퍼
 js/app.js              화면 구성과 상호작용, 지도
-compose.yaml           Docker 서버 (nginx, 127.0.0.1:8787)
-nginx.conf             nginx 설정 (캐시 없음, 사이트 외 파일 차단)
-serve.cmd              Docker 없이 띄우는 임시 서버
+.nojekyll              GitHub Pages 가 파일을 가공하지 않도록 하는 표시
 ```
