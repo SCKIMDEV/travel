@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Travel Diary</title>
+  <meta name="description" content="여행 다이어리 — 일정, 사진, 기록을 한 곳에">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="nav" id="nav" aria-label="일정 이동">
+    <a class="nav-brand" id="nav-brand" href="#top">Travel Diary</a>
+    <div class="nav-days" id="nav-days"></div>
+    <div class="nav-actions">
+      <button class="btn btn-ghost" id="btn-export" type="button" title="사진과 기록을 JSON 파일 하나로 저장">백업 저장</button>
+      <button class="btn btn-ghost" id="btn-import" type="button" title="백업 파일에서 복원">불러오기</button>
+    </div>
+  </nav>
+
+  <header class="hero" id="top">
+    <p class="eyebrow">Travel Diary · <span id="hero-nights"></span></p>
+    <h1 class="hero-title" id="hero-title"></h1>
+    <p class="hero-period" id="hero-period"></p>
+    <p class="hero-stats" id="hero-stats"></p>
+    <div class="map-wrap">
+      <div class="map-head">
+        <div class="map-tabs" id="map-tabs" aria-label="지도에 표시할 날짜"></div>
+      </div>
+      <div class="map" id="map" aria-label="여행 동선 지도">
+        <p class="map-fallback" id="map-fallback" hidden>지도를 불러오려면 인터넷 연결이 필요해요.</p>
+        <p class="map-hint" id="map-hint" hidden>지도를 한 번 탭하면 움직일 수 있어요</p>
+      </div>
+    </div>
+    <div class="seal" id="seal" aria-hidden="true" hidden></div>
+  </header>
+
+  <main id="days"></main>
+
+  <footer class="foot">
+    <p>모든 사진과 기록은 이 브라우저 안(IndexedDB)에만 저장됩니다. 가끔 <strong>백업 저장</strong>으로 파일을 남겨 두세요.</p>
+    <p class="foot-storage" id="foot-storage"></p>
+  </footer>
+
+  <!-- 사진 보기 -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="사진 보기" hidden>
+    <button class="lb-close" id="lb-close" type="button" aria-label="닫기">×</button>
+    <button class="lb-nav lb-prev" id="lb-prev" type="button" aria-label="이전 사진">‹</button>
+    <figure class="lb-figure"><img id="lb-img" alt=""></figure>
+    <button class="lb-nav lb-next" id="lb-next" type="button" aria-label="다음 사진">›</button>
+    <div class="lb-bar">
+      <div class="lb-meta"><span class="lb-title" id="lb-title"></span><span class="lb-count" id="lb-count"></span></div>
+      <input class="lb-caption" id="lb-caption" type="text" placeholder="사진 설명을 남겨보세요" maxlength="120">
+      <div class="lb-actions">
+        <button class="btn btn-dark" id="lb-move-prev" type="button">← 순서 앞으로</button>
+        <button class="btn btn-dark" id="lb-move-next" type="button">순서 뒤로 →</button>
+        <button class="btn btn-dark" id="lb-download" type="button">파일로 저장</button>
+        <button class="btn btn-dark btn-danger" id="lb-delete" type="button">삭제</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="photo-file" accept="image/*" multiple hidden>
+  <input type="file" id="import-file" accept=".json,application/json" hidden>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="js/itinerary.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

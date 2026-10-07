@@ -1,0 +1,7 @@
+# Claude Code 로컬 설정
+.claude/
+# 비밀 값 (Tailscale 키 등)
+.env
+# OS/편집기 찌꺼기
+Thumbs.db
+.DS_Store
