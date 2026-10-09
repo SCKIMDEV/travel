@@ -9,7 +9,7 @@
  * - storageKey: 브라우저 저장소 이름. server: 사진·기록을 기기 간에 공유하는 서버 주소 (비우면 브라우저에만 저장).
  * - 도쿄 일정은 js/itinerary.tokyo.js 에 보관되어 있습니다. index.html 의 script 태그를 바꾸면 다시 쓸 수 있습니다.
  */
-const HOTEL = { lat: 37.784755, lng: 128.929264 };   // 신라모노그램 강릉 (호텔동)
+const HOTEL = { lat: 37.785187, lng: 128.928717 };   // 신라모노그램 강릉 호텔동 (송정동, 해안로 186). 레지던스동이면 37.785972, 128.926079
 
 const ITINERARY = {
   id: "gangneung",
