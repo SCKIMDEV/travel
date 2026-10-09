@@ -109,7 +109,7 @@
     const last = day.stops.length - 1;
     const timeline = day.stops.map((s, i) => `
       <div class="tl-stop${i === last ? ' is-last' : ''}" role="listitem" data-stop="${s.id}">
-        <button class="tl-label" type="button" data-action="jump" data-stop="${s.id}" title="기록으로 이동">${esc(s.name)}</button>
+        <button class="tl-label" type="button" data-action="map" data-stop="${s.id}" title="지도에서 보기">${esc(s.name)}</button>
         <span class="tl-dot"></span>
         ${s.next && i !== last ? `<span class="tl-transit">${esc(s.next)}</span>` : ''}
       </div>`).join('');
@@ -643,7 +643,7 @@
   function locate(stopId) {
     const s = stopIndex.get(stopId);
     const rec = markerByStop.get(stopId);
-    if (!map || !s || !rec) return;
+    if (!map || !s || !rec) return false;
     if (pendingLocate) {   // 연달아 누르면 이전 요청은 취소
       map.off('moveend', pendingLocate.onMove);
       clearTimeout(pendingLocate.timer);
@@ -682,6 +682,7 @@
     map.flyTo(target, zoom, { duration: 0.8 });   // flyTo 내부 _stop 이 이전 애니메이션의 moveend 를 먼저 흘려보낸다
     map.once('moveend', onMove);
     pendingLocate = { onMove, timer: setTimeout(() => open(true), 1500) };
+    return true;
   }
 
   // ---------- 백업 ----------
@@ -797,6 +798,8 @@
         jumpTo(stop);
       } else if (action === 'locate') {
         locate(stop);
+      } else if (action === 'map') {   // 타임라인: 지도에서 보기. 지도가 없거나(오프라인) 좌표가 없는 장소면 기록으로 이동
+        if (!locate(stop)) jumpTo(stop);
       }
     });
     main.addEventListener('keydown', e => {
