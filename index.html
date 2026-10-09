@@ -14,10 +14,6 @@
   <nav class="nav" id="nav" aria-label="일정 이동">
     <a class="nav-brand" id="nav-brand" href="#top">Travel Diary</a>
     <div class="nav-days" id="nav-days"></div>
-    <div class="nav-actions">
-      <button class="btn btn-ghost" id="btn-export" type="button" title="사진과 기록을 JSON 파일 하나로 저장">백업 저장</button>
-      <button class="btn btn-ghost" id="btn-import" type="button" title="백업 파일에서 복원">불러오기</button>
-    </div>
   </nav>
 
   <header class="hero" id="top">
@@ -39,11 +35,6 @@
 
   <main id="days"></main>
 
-  <footer class="foot">
-    <p id="foot-note">모든 사진과 기록은 이 브라우저 안(IndexedDB)에만 저장됩니다. 가끔 <strong>백업 저장</strong>으로 파일을 남겨 두세요.</p>
-    <p class="foot-storage" id="foot-storage"></p>
-  </footer>
-
   <!-- 사진 보기 -->
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="사진 보기" hidden>
     <button class="lb-close" id="lb-close" type="button" aria-label="닫기">×</button>
@@ -63,7 +54,6 @@
   </div>
 
   <input type="file" id="photo-file" accept="image/*" multiple hidden>
-  <input type="file" id="import-file" accept=".json,application/json" hidden>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
   <script src="js/itinerary.js"></script>

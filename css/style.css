@@ -63,7 +63,6 @@ h1, h2, h3, p { margin: 0; }
 }
 .nav-days a:hover { background: var(--hair); }
 .nav-days a.is-active { background: var(--ink); color: var(--paper); }
-.nav-actions { display: flex; gap: 6px; }
 
 /* ---------- 버튼 ---------- */
 .btn {
@@ -177,7 +176,7 @@ h1, h2, h3, p { margin: 0; }
 .btn-icon svg { width: 16px; height: 16px; }
 
 /* ---------- 하루 섹션 ---------- */
-#days { max-width: var(--maxw); margin: 0 auto; }
+#days { max-width: var(--maxw); margin: 0 auto; padding-bottom: 64px; }
 .day {
   display: grid; grid-template-columns: var(--side-w) 1fr;
   border-top: 1px solid var(--line);
@@ -306,8 +305,6 @@ h1, h2, h3, p { margin: 0; }
 .save-state.is-visible { opacity: 1; }
 
 /* ---------- 푸터 ---------- */
-.foot { max-width: var(--maxw); margin: 0 auto; padding: 36px 40px 64px; font-size: 12px; color: var(--muted); }
-.foot-storage { margin-top: 4px; font-family: var(--serif); letter-spacing: .06em; }
 
 /* ---------- 사진 보기 ---------- */
 .lightbox {
@@ -357,8 +354,6 @@ h1, h2, h3, p { margin: 0; }
   :root { --nav-h: 88px; }
   .nav { flex-wrap: wrap; gap: 6px 10px; padding: 8px 12px; }
   .nav-days { order: 3; width: 100%; justify-content: center; margin: 0; overflow-x: auto; }
-  .nav-actions { margin-left: auto; }
-  .nav-actions .btn { padding: 5px 10px; font-size: 11px; }
   .hero { padding: 40px 16px 28px; }
   .hero-period { font-size: 17px; }
   .seal { right: 16px; top: 44px; width: 44px; height: 60px; font-size: 17px; }
@@ -393,12 +388,12 @@ h1, h2, h3, p { margin: 0; }
   .lb-figure img { max-height: calc(100vh - 230px); }
   .lb-nav { display: none; }
   .lb-bar { padding: 10px 14px 16px; }
-  .foot { padding: 24px 16px 44px; }
+  #days { padding-bottom: 44px; }
 }
 
 /* ---------- 인쇄 ---------- */
 @media print {
-  .nav, .btn, .btn-icon, .dropzone, .photo-add, .lightbox, .toast, .save-state, .map-head, .map-hint, .leaflet-control-zoom, .foot-storage { display: none !important; }
+  .nav, .btn, .btn-icon, .dropzone, .photo-add, .lightbox, .toast, .save-state, .map-head, .map-hint, .leaflet-control-zoom { display: none !important; }
   body::before { display: none; }
   html, body { background: #fff; }
   .day { break-before: page; }
@@ -410,6 +405,3 @@ h1, h2, h3, p { margin: 0; }
 
 /* 저장 실패 표시 */
 .save-state.is-error { color: var(--red); }
-
-/* 비밀번호 입력 버튼 (표지 안내 줄) */
-.btn-key { margin-left: 8px; vertical-align: middle; }

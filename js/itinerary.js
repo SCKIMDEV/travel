@@ -16,6 +16,8 @@ const ITINERARY = {
   storageKey: "gangneung-diary",
   // 사진·기록을 기기 간에 공유하는 서버 주소. 비우면("") 브라우저 안(IndexedDB)에만 저장한다.
   server: "https://parking.tail7d1054.ts.net:8443",
+  // 서버 접속 키. 여기에 적어 두면 비밀번호를 묻지 않는다 (주소를 아는 사람은 누구나 사진을 보고 올리고 지울 수 있음).
+  serverKey: "SgbvO4gEOnWbvhSyCPHByGDJspcNkMV9",
   title: "강릉여행",
   brand: "Gangneung Diary",
   seal: "",   // 오른쪽 위 붉은 도장 글자. 비우면 숨겨진다 (예: "江陵")

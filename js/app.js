@@ -22,7 +22,7 @@
   const LOCAL_HOST = ['localhost', '127.0.0.1', '[::1]', ''].includes(location.hostname);
   const SERVER = (LOCAL_HOST && new URLSearchParams(location.search).get('server')) || ITINERARY.server || '';
   const REMOTE = !!SERVER && typeof RemoteStore !== 'undefined';
-  if (REMOTE) RemoteStore.configure(SERVER, ITINERARY.id || 'trip');
+  if (REMOTE) RemoteStore.configure(SERVER, ITINERARY.id || 'trip', ITINERARY.serverKey || '');
   const STORE = REMOTE ? RemoteStore : DB;
   const toBlob = async x => {   // 서버 모드에서는 URL 을 받아온다
     if (x instanceof Blob) return x;
@@ -227,22 +227,11 @@
     photosByStop.forEach(l => { photos += l.length; });
     let notes = 0;
     entries.forEach(e => { if (e.note && e.note.trim()) notes++; });
-    if (serverError && $('#btn-key')) { updateStorage(); return; }   // 비밀번호 안내 배너는 유지
     $('#hero-stats').textContent = serverError
       ? `⚠ 사진 서버에 연결할 수 없어요. ${serverError}`
       : (photos || notes)
         ? `사진 ${photos}장 · 기록 ${notes}개`
         : '아직 담긴 추억이 없어요. 사진과 기록을 남겨보세요.';
-    updateStorage();
-  }
-  async function updateStorage() {
-    const el = $('#foot-storage');
-    if (REMOTE) { el.textContent = `SERVER ${SERVER.replace(/^https?:\/\//, '')}`; return; }
-    if (!navigator.storage || !navigator.storage.estimate) { el.textContent = ''; return; }
-    try {
-      const { usage = 0 } = await navigator.storage.estimate();
-      el.textContent = `STORAGE ${(usage / 1048576).toFixed(1)} MB`;
-    } catch { el.textContent = ''; }
   }
 
   // ---------- 기록 저장 ----------
@@ -267,7 +256,6 @@
     }, 400));
   }
   function flushSaves() {
-    if (REMOTE && !RemoteStore.hasKey) { saveTimers.clear(); return; }   // 떠나는 순간에 비밀번호를 물을 수는 없다
     saveTimers.forEach((t, id) => {
       clearTimeout(t);
       const e = entries.get(id);
@@ -886,14 +874,6 @@
       if (e.key === 'ArrowRight') stepLightbox(1);
     });
 
-    // 백업
-    $('#btn-export').addEventListener('click', exportBackup);
-    $('#btn-import').addEventListener('click', () => $('#import-file').click());
-    $('#import-file').addEventListener('change', e => {
-      if (e.target.files[0]) importBackup(e.target.files[0]);
-      e.target.value = '';
-    });
-
     // 미저장 기록 밀어넣기
     window.addEventListener('beforeunload', flushSaves);
     document.addEventListener('visibilitychange', () => { if (document.hidden) flushSaves(); });
@@ -907,32 +887,8 @@
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { $$('textarea.note').forEach(autosize); fitTitle(); });
   }
 
-  // 비밀번호가 없거나 틀릴 때: 표지 통계 줄에 안내와 입력 버튼을 보여준다 (자동 대화상자 없음).
-  function showKeyBanner(wrong) {
-    serverError = wrong ? '비밀번호가 맞지 않아요.' : '사진·기록을 보려면 비밀번호 링크로 열거나 비밀번호를 입력하세요.';
-    const el = $('#hero-stats');
-    el.innerHTML = `${esc(serverError)} <button type="button" class="btn btn-ghost btn-key" id="btn-key">비밀번호 입력</button>`;
-    $('#btn-key').addEventListener('click', async () => {
-      try {
-        await RemoteStore.askKey(wrong ? '비밀번호가 맞지 않아요. 다시 입력해 주세요' : undefined);
-        serverError = '';
-        await loadData();
-        renderAll();
-        toast('연결됐어요');
-      } catch (err) {
-        if (err.code === 'NO_KEY') return;
-        console.error(err);
-        showKeyBanner(err.code === 'UNAUTHORIZED' || err.code === 'BAD_KEY');
-      }
-    });
-  }
-
   // ---------- 시작 ----------
   async function init() {
-    const note = $('#foot-note');
-    if (note) note.innerHTML = REMOTE
-      ? '사진과 기록은 <strong>서버(PC)</strong> 에 저장되어 어느 기기에서 열어도 같은 내용이 보입니다. 비밀번호는 이 기기에 기억됩니다.'
-      : '모든 사진과 기록은 이 브라우저 안(IndexedDB)에만 저장됩니다. 가끔 <strong>백업 저장</strong>으로 파일을 남겨 두세요.';
     buildStatic();
     bindEvents();
     setupNavHighlight();
@@ -940,21 +896,17 @@
       await loadData();
     } catch (err) {
       console.error(err);
-      if (REMOTE && (err.code === 'NO_KEY' || err.code === 'UNAUTHORIZED')) {
-        showKeyBanner(err.code === 'UNAUTHORIZED');   // 대화상자 대신 화면 안내 + 버튼
-      } else {
-        if (REMOTE) serverError = err.message || '';
-        toast(REMOTE
-          ? `사진 서버에 연결할 수 없어요 (${err.message}). 서버 PC 가 켜져 있는지 확인해 주세요.`
-          : '브라우저 저장소를 열 수 없어요. 시크릿 모드이거나 저장소가 차단된 것 같아요.', 0);
-      }
+      if (REMOTE) serverError = err.message || '';
+      toast(REMOTE
+        ? `사진 서버에 연결할 수 없어요 (${err.message}). 서버 PC 가 켜져 있는지 확인해 주세요.`
+        : '브라우저 저장소를 열 수 없어요. 시크릿 모드이거나 저장소가 차단된 것 같아요.', 0);
     }
     renderAll();
     initMap();   // 온라인일 때만 지도가 뜬다. 실패해도 나머지는 그대로 동작.
   }
 
-  // 콘솔/테스트용
-  window.TravelDiary = { addFiles, exportBackup, importBackup, locate, setActiveDay, reload, remote: REMOTE, forgetKey: () => { if (REMOTE) RemoteStore.forgetKey(); } };
+  // 콘솔/테스트용 (백업: TravelDiary.exportBackup() / TravelDiary.importBackup(file))
+  window.TravelDiary = { addFiles, exportBackup, importBackup, locate, setActiveDay, reload, remote: REMOTE };
 
   init();
 })();
