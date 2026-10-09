@@ -95,7 +95,6 @@ h1, h2, h3, p { margin: 0; }
   font: 500 clamp(40px, 11vw, 132px)/1.05 "Playfair Display", var(--serif-kr);   /* 영문은 Playfair, 한글은 Noto Serif KR */
   letter-spacing: .02em; white-space: nowrap;   /* 긴 제목은 app.js fitTitle() 이 폭에 맞춰 줄인다 */
 }.hero-period { margin-top: 16px; font: 400 20px var(--serif); letter-spacing: .04em; }
-.hero-stats { margin-top: 6px; font-size: 13px; color: var(--muted); min-height: 1.6em; }
 .seal {
   position: absolute; top: 72px; right: 44px;
   width: 56px; height: 78px;

@@ -177,7 +177,6 @@
       el.value = e ? (e[el.dataset.field] || '') : '';
       if (el.tagName === 'TEXTAREA') autosize(el);
     });
-    updateStats();
   }
 
   // ---------- 사진 표시 ----------
@@ -222,18 +221,6 @@
     $$(`.tl-stop[data-stop="${stopId}"]`).forEach(el => el.classList.toggle('has-content', hasContent(stopId)));
     refreshPin(stopId);
   }
-  function updateStats() {
-    let photos = 0;
-    photosByStop.forEach(l => { photos += l.length; });
-    let notes = 0;
-    entries.forEach(e => { if (e.note && e.note.trim()) notes++; });
-    $('#hero-stats').textContent = serverError
-      ? `⚠ 사진 서버에 연결할 수 없어요. ${serverError}`
-      : (photos || notes)
-        ? `사진 ${photos}장 · 기록 ${notes}개`
-        : '아직 담긴 추억이 없어요. 사진과 기록을 남겨보세요.';
-  }
-
   // ---------- 기록 저장 ----------
   function saveEntry(id, patch, statusEl) {
     const cur = entries.get(id) || { id };
@@ -252,7 +239,6 @@
         return;
       }
       if (stopIndex.has(id)) updateDot(id);
-      updateStats();
     }, 400));
   }
   function flushSaves() {
@@ -357,7 +343,6 @@
     photosByStop.set(stopId, list);
     renderPhotos(stopId);
     updateDot(stopId);
-    updateStats();
     if (uploadError) toast(`${ok}장 추가 후 ${REMOTE ? '서버에 올리지' : '저장하지'} 못했어요: ${uploadError}`, 6000);
     else if (failed.length) toast(`${ok}장 추가 · ${failed.length}장은 열 수 없었어요 (HEIC 등 미지원 형식)`, 4500);
     else toast(`사진 ${ok}장을 추가했어요`);
@@ -447,7 +432,6 @@
     revokeUrls(p.id);
     renderPhotos(lightbox.stopId);
     updateDot(lightbox.stopId);
-    updateStats();
     if (!list.length) closeLightbox(); else showLightbox();
     toast('사진을 삭제했어요');
   }
