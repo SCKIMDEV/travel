@@ -114,16 +114,29 @@
   //  1) 칸보다 긴 단어가 있으면 이름 상자를 그 단어 폭까지 넓혀 점 위 가운데에 둔다 (옆 칸 여백으로 조금 넘침)
   //  2) 그래도 이웃 이름과 닿으면 더 넓은 쪽 글자를 1px 씩 최대 2px 줄인다
   //  3) 그래도 닿으면 마지막 수단으로 단어 중간 줄바꿈(is-tight)
+  function clearLabelFit(tl) {
+    tl.style.paddingTop = ''; tl.style.height = '';
+    $$('.tl-label', tl).forEach(l => { l.style.fontSize = ''; l.style.maxWidth = ''; l.style.transform = ''; l.classList.remove('is-tight'); });
+  }
   function fitLabels(tl) {
     const labs = $$('.tl-label', tl);
+    clearLabelFit(tl);
     if (!labs.length) return;
-    labs.forEach(l => { l.style.fontSize = ''; l.style.maxWidth = ''; l.classList.remove('is-tight'); });
+    const clips = getComputedStyle(tl).overflowX !== 'visible';   // 데스크톱 한 줄 타임라인은 가로 스크롤 상자라 가장자리가 잘린다
     const base = parseFloat(getComputedStyle(labs[0]).fontSize) || 14;
     const lines = l => { const r = document.createRange(); r.selectNodeContents(l); return [...r.getClientRects()]; };
     const box = l => { const r = document.createRange(); r.selectNodeContents(l); return r.getBoundingClientRect(); };
+    const keepInside = l => {   // 첫/마지막 이름이 스크롤 상자 밖으로 나가 잘리지 않도록 안쪽으로 민다
+      l.style.transform = '';
+      if (!clips) return;
+      const t = tl.getBoundingClientRect(), b = box(l);
+      const s = b.left < t.left + 2 ? Math.ceil(t.left + 2 - b.left) : b.right > t.right - 2 ? -Math.ceil(b.right - t.right + 2) : 0;
+      if (s) l.style.transform = `translateX(calc(-50% + ${s}px))`;
+    };
     const widen = l => {
       const widest = Math.max(0, ...lines(l).map(r => r.width));
       if (widest > l.clientWidth - 4 + 0.5) l.style.maxWidth = `${Math.ceil(widest) + 4}px`;   // 좌우 padding 2px 씩
+      keepInside(l);
     };
     const GAP = 4;
     const touch = (a, b) => {
@@ -138,7 +151,7 @@
     };
     const tighten = l => {
       if (l.classList.contains('is-tight')) return false;
-      l.classList.add('is-tight'); l.style.maxWidth = '';
+      l.classList.add('is-tight'); l.style.maxWidth = ''; keepInside(l);
       return true;
     };
     labs.forEach(widen);
@@ -152,6 +165,12 @@
         }
       }
       if (!changed) break;
+    }
+    const over = Math.ceil(tl.getBoundingClientRect().top + 2 - Math.min(...labs.map(l => box(l).top)));
+    if (over > 0) {
+      const h = tl.offsetHeight;   // border-box: 위 여백만큼 높이를 늘려 내용(점·선) 영역은 그대로 둔다
+      tl.style.paddingTop = `${over}px`;
+      if (!tl.classList.contains('is-wrapped')) tl.style.height = `${h + over}px`;
     }
   }
 
@@ -917,10 +936,18 @@
 
     // 폰트 로드/창 크기 변화 후 textarea 높이 재계산
     let resizeTimer = null;
+    let lastWidth = window.innerWidth;
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => { $$('textarea.note').forEach(autosize); fitTitle(); layoutTimelines(); }, 150);
+      resizeTimer = setTimeout(() => {
+        $$('textarea.note').forEach(autosize);
+        fitTitle();
+        if (window.innerWidth !== lastWidth) { lastWidth = window.innerWidth; layoutTimelines(); }   // 높이만 바뀐 경우(모바일 주소창)는 그대로
+      }, 150);
     });
+    // 인쇄: 화면 폭에 맞춘 글자 크기·줄바꿈을 풀고 인쇄 CSS 기본값으로 찍은 뒤, 끝나면 다시 맞춘다
+    window.addEventListener('beforeprint', () => $$('.timeline').forEach(clearLabelFit));
+    window.addEventListener('afterprint', layoutTimelines);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { $$('textarea.note').forEach(autosize); fitTitle(); layoutTimelines(); });
   }
 
