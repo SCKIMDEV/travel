@@ -1,16 +1,15 @@
 /*
  * 여행 일정 데이터 — 강릉 (1박 2일)
  * - 이 파일만 고치면 페이지 전체(제목, 내비게이션, 타임라인, 다이어리 카드, 지도)에 반영됩니다.
- * - 아래 일정은 강릉 대표 코스로 짠 샘플입니다. 실제 일정에 맞게 장소·이동시간을 바꿔 쓰세요.
  * - stop.id 는 사진과 기록을 연결하는 키입니다. 사진을 넣은 뒤에는 id를 바꾸지 마세요.
- * - next: 다음 장소까지의 이동 수단/시간. 없으면 생략해도 됩니다.
+ * - next: 다음 장소까지의 이동 수단/시간. 좌표 사이 거리로 추정한 값이라 실제와 다를 수 있습니다.
  * - lat / lng: 지도 핀 좌표(WGS84). 없으면 지도에 표시되지 않습니다.
- *   좌표는 OpenStreetMap 과 도로명주소 검색으로 각각 찾아 맞춘 값입니다 (역·매표소·광장 등 실제 입구 기준).
- * - approx: true 이면 팝업에 "추정 위치" 안내가 붙습니다. 숙소처럼 정확한 위치를 모를 때 씁니다.
- * - storageKey: 브라우저 저장소 이름. 여행마다 다르게 두면 사진·기록이 섞이지 않습니다.
+ *   좌표는 OpenStreetMap 과 도로명주소 검색으로 각각 찾아 맞춘 값입니다 (입구·매장 기준).
+ * - approx: true 이면 팝업에 "추정 위치" 안내가 붙습니다 (지점을 가정한 곳).
+ * - storageKey: 브라우저 저장소 이름. server: 사진·기록을 기기 간에 공유하는 서버 주소 (비우면 브라우저에만 저장).
  * - 도쿄 일정은 js/itinerary.tokyo.js 에 보관되어 있습니다. index.html 의 script 태그를 바꾸면 다시 쓸 수 있습니다.
  */
-const HOTEL = { lat: 37.77400, lng: 128.94500, approx: true };   // 안목해변 근처(가정). 실제 숙소 좌표로 바꿔 주세요.
+const HOTEL = { lat: 37.784755, lng: 128.929264 };   // 신라모노그램 강릉 (호텔동)
 
 const ITINERARY = {
   id: "gangneung",
@@ -26,29 +25,28 @@ const ITINERARY = {
     {
       id: "day1", label: "DAY 1", date: "10.18", weekday: "SUN",
       stops: [
-        { id: "gangneung-arrival", name: "강릉역 도착",       en: "GANGNEUNG STATION · KTX", next: "택시 10분", lat: 37.764408, lng: 128.899519 },   // 강릉역 역사
-        { id: "chodang-tofu",      name: "초당순두부마을",     en: "CHODANG TOFU VILLAGE",    next: "도보 15분", lat: 37.790452, lng: 128.915481 },   // 초당순두부길 식당가 중심
-        { id: "gangmun-beach",     name: "강문해변",           en: "GANGMUN BEACH",           next: "도보 20분", lat: 37.796900, lng: 128.917200 },   // 강문솟대다리 남측 광장
-        { id: "gyeongpo-beach",    name: "경포해변",           en: "GYEONGPO BEACH",          next: "택시 10분", lat: 37.805380, lng: 128.907220 },   // 경포해변 중앙광장
-        { id: "hotel-checkin",     name: "숙소 체크인",        en: "CHECK-IN",                next: "도보 5분",  ...HOTEL },
-        { id: "anmok-coffee",      name: "안목해변 커피거리",   en: "ANMOK COFFEE STREET",                       lat: 37.772030, lng: 128.947975 }    // 커피거리 중간
+        { id: "chahyunhee-sundubu", name: "차현희 순두부청국장", en: "CHAHYUNHEE SUNDUBU",   next: "도보 2분",  lat: 37.791050, lng: 128.916170 },   // 초당동 본점
+        { id: "sundubu-gelato",     name: "순두부 젤라또",       en: "SUNDUBU GELATO",       next: "도보 9분",  lat: 37.791710, lng: 128.915470 },   // 1호점 (초당 본점)
+        { id: "gangmun-beach",      name: "강문해변",            en: "GANGMUN BEACH",        next: "차 20분",  lat: 37.796790, lng: 128.916860 },   // 강문솟대다리 남단 광장
+        { id: "horin-park",         name: "호린파크",            en: "HORIN PARK",           next: "차 10분",  lat: 37.844430, lng: 128.865620 },   // 사천면 (경포대허브농장)
+        { id: "terarosa",           name: "테라로사",            en: "TERAROSA SACHEON",     next: "차 15분",  lat: 37.822400, lng: 128.885040, approx: true },   // 사천점 기준. 다른 지점이면 좌표 수정 (구정 본점 37.696338, 128.892412 / 경포점은 검색)
+        { id: "hotel-checkin",      name: "신라모노그램 체크인",  en: "SHILLA MONOGRAM · CHECK-IN", next: "차 10분", ...HOTEL },
+        { id: "gamja-yuwonji",      name: "감자유원지",          en: "GAMJA YUWONJI · DINNER", next: "도보 4분",  lat: 37.756350, lng: 128.897400 },   // 중앙시장 옆
+        { id: "jungang-market",     name: "강릉 중앙시장",       en: "JUNGANG MARKET",       next: "차 10분",  lat: 37.754150, lng: 128.898680 },   // 금성로 정문
+        { id: "hotel-night",        name: "숙소 · 수영과 밤 산책", en: "SWIM · NIGHT WALK",                      ...HOTEL }
       ]
     },
     {
       id: "day2", label: "DAY 2", date: "10.19", weekday: "MON",
       stops: [
-        { id: "hotel-breakfast",   name: "숙소 조식",                en: "BREAKFAST",               next: "차 30분", ...HOTEL },
-        { id: "jeongdongjin",      name: "정동진역 · 모래시계공원",   en: "JEONGDONGJIN",            next: "차 10분", lat: 37.691830, lng: 129.032509 },   // 정동진역
-        { id: "haslla",            name: "하슬라아트월드",           en: "HASLLA ART WORLD",        next: "차 25분", lat: 37.706207, lng: 129.012020 },   // 매표소 (율곡로 1441)
-        { id: "terarosa",          name: "테라로사 커피공장",        en: "TERAROSA COFFEE FACTORY", next: "차 20분", lat: 37.696338, lng: 128.892412 },   // 구정면 본점 (현천길 7)
-        { id: "ojukheon",          name: "오죽헌",                  en: "OJUKHEON",                next: "차 10분", lat: 37.779151, lng: 128.879670 },   // 매표소 (정문)
-        { id: "jungang-market",    name: "강릉중앙시장",            en: "JUNGANG MARKET",          next: "차 5분",  lat: 37.754099, lng: 128.898689 },   // 금성로 정문
-        { id: "gangneung-depart",  name: "강릉역 출발",              en: "GANGNEUNG STATION · KTX",                  lat: 37.764408, lng: 128.899519 }
+        { id: "gossine-makguksu",   name: "고씨네 동해 막국수",   en: "GOSSINE MAKGUKSU",     next: "차 10분",  lat: 37.796280, lng: 128.917150 },   // 강문 본점
+        { id: "duding",             name: "두딩",                en: "DUDING",               next: "도보 2분",  lat: 37.758090, lng: 128.892120 },   // 교동 두부푸딩
+        { id: "boiled-potato",      name: "삶은 감자",           en: "SALMEUN GAMJA",        next: "도보 1분",  lat: 37.758940, lng: 128.891710 },   // 감자 소품숍
+        { id: "zamo-pajama",        name: "자모파자마",          en: "ZAMOPAJAMA",           next: "도보 2분",  lat: 37.759660, lng: 128.892200 },   // 파자마 매장
+        { id: "cafe-pino",          name: "카페피노",            en: "CAFE PINO",            next: "차 40분",  lat: 37.758340, lng: 128.892370 },
+        { id: "daegwallyeong-sheep", name: "대관령 양떼목장",     en: "DAEGWALLYEONG SHEEP FARM", next: "귀가",  lat: 37.686760, lng: 128.752840 },   // 매표소
+        { id: "go-home",            name: "집으로 이동",          en: "HOME" }
       ]
     }
   ]
 };
-
-// 더 넣고 싶을 때 쓸 수 있는 장소들 (주문진 방면, 좌표 검증 완료)
-// { id: "jumunjin-market",     name: "주문진 수산시장",         en: "JUMUNJIN FISH MARKET", lat: 37.891080, lng: 128.827701 }
-// { id: "yeongjin-breakwater", name: "영진해변 도깨비 방파제",   en: "YEONGJIN BREAKWATER",  lat: 37.879872, lng: 128.834190 }   // 영진해변 북쪽 끝, 도깨비 촬영지 정류장 옆
