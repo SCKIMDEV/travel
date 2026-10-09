@@ -1,7 +1,8 @@
 /*
  * 서버 저장소 — js/itinerary.js 에 server 주소가 있을 때 IndexedDB(DB) 대신 쓴다.
  * DB 와 같은 메서드 이름을 가지며, 사진 객체의 full/thumb 는 Blob 대신 서버 파일 URL 문자열이다.
- * 비밀번호(X-Diary-Key)는 처음 한 번 물어보고, 맞다고 확인된 뒤에 localStorage 에 기억한다.
+ * 비밀번호(X-Diary-Key)는 주소의 #k=... 조각(링크)에서 읽어 localStorage 에 기억한다. 브라우저 대화상자는 띄우지 않고,
+ * 비밀번호가 없거나 틀리면 NO_KEY / UNAUTHORIZED 오류를 던져 화면이 안내 문구와 입력 버튼을 보여주게 한다.
  * 이미지 주소에는 비밀번호 대신 서버가 내려준 읽기 전용 파일 토큰이 들어간다.
  */
 const RemoteStore = (() => {
@@ -23,6 +24,13 @@ const RemoteStore = (() => {
     storageKey = `diary.key:${trip}`;
     try { key = localStorage.getItem(storageKey) || ''; } catch { key = ''; }
     keyVerified = false;
+    // 링크에 담긴 비밀번호: https://.../travel/#k=비밀번호 로 열면 저장하고 주소에서 지운다 (서버로는 전송되지 않는 조각).
+    const m = /(?:^#|[#&])k=([^&]+)/.exec(location.hash || '');
+    if (m) {
+      const v = decodeURIComponent(m[1]).trim();
+      if (KEY_RE.test(v)) { key = v; keyVerified = false; try { localStorage.setItem(storageKey, key); } catch { /* 저장 불가 환경 */ } }
+      try { history.replaceState(null, '', location.pathname + location.search); } catch { /* 무시 */ }
+    }
   }
 
   function fileUrl(id, kind) {
@@ -30,7 +38,7 @@ const RemoteStore = (() => {
   }
   const withUrls = meta => ({ ...meta, full: fileUrl(meta.id, 'full'), thumb: fileUrl(meta.id, 'thumb') });
 
-  // 동시에 여러 요청이 401 을 받아도 프롬프트는 한 번만 띄운다. 끝나면 다시 물어볼 수 있게 초기화한다.
+  // 사용자가 버튼을 눌렀을 때만 비밀번호를 묻는다 (자동으로 대화상자를 띄우지 않는다).
   function askKey(message) {
     if (asking) return asking;
     asking = new Promise((resolve, reject) => {
@@ -52,15 +60,14 @@ const RemoteStore = (() => {
     try { localStorage.setItem(storageKey, key); } catch { /* 저장 불가 환경 */ }
   }
 
-  async function request(method, pathname, { body, headers = {}, retry = true } = {}) {
-    if (!key) await askKey();
+  async function request(method, pathname, { body, headers = {} } = {}) {
+    if (!key) throw Object.assign(new Error('비밀번호가 필요해요'), { code: 'NO_KEY' });
     const init = { method, headers: { 'X-Diary-Key': key, ...headers }, body };
     if (typeof body === 'string' && new Blob([body]).size < 60000) init.keepalive = true;   // 페이지를 떠날 때도 저장되도록
     const res = await fetch(`${base}/api/${trip}/${pathname}`, init);
     if (res.status === 401) {
-      if (!retry) throw Object.assign(new Error('비밀번호가 맞지 않아요'), { code: 'UNAUTHORIZED' });
-      await askKey('비밀번호가 맞지 않아요. 다시 입력해 주세요');
-      return request(method, pathname, { body, headers, retry: false });
+      keyVerified = false;
+      throw Object.assign(new Error('비밀번호가 맞지 않아요'), { code: 'UNAUTHORIZED' });
     }
     if (res.status === 429) throw new Error('비밀번호 오류가 잦아 잠시 막혔어요. 몇 분 뒤 다시 시도해 주세요');
     if (!res.ok) {
@@ -84,6 +91,7 @@ const RemoteStore = (() => {
   return {
     configure,
     fileUrl,
+    askKey,
     get hasKey() { return !!key; },
     forgetKey() { key = ''; keyVerified = false; asking = null; try { localStorage.removeItem(storageKey); } catch { /* 무시 */ } },
 

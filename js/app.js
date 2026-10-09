@@ -69,6 +69,7 @@
     $('#hero-nights').textContent = ITINERARY.nights || '';
     $('#nav-days').innerHTML = ITINERARY.days.map(d => `<a href="#${d.id}" data-day="${d.id}">${esc(d.label)}</a>`).join('');
     $('#days').innerHTML = ITINERARY.days.map(renderDay).join('');
+    layoutTimelines();
   }
 
   // 제목이 한 줄에 들어가지 않으면(예: GANGNEUNG) 글자 크기를 폭에 맞춰 줄인다. 도장 자리는 항상 비워 둔다.
@@ -87,6 +88,21 @@
       const base = parseFloat(getComputedStyle(el).fontSize);
       el.style.fontSize = `${Math.max(24, Math.floor(base * available / textWidth))}px`;
     }
+  }
+
+  // 좁은 화면에서는 타임라인을 두 줄로 접는다. 줄 끝 장소의 이동시간은 점 아래에 둔다.
+  function layoutTimelines() {
+    const narrow = window.innerWidth <= 760;
+    $$('.timeline').forEach(tl => {
+      const items = $$('.tl-stop', tl);
+      const wrap = narrow && items.length > 3;
+      tl.classList.toggle('is-wrapped', wrap);
+      const perRow = wrap ? Math.ceil(items.length / 2) : 0;
+      items.forEach((el, i) => {
+        el.style.flexBasis = wrap ? `${100 / perRow}%` : '';
+        el.classList.toggle('row-end', wrap && i === perRow - 1 && i !== items.length - 1);
+      });
+    });
   }
 
   function renderDay(day) {
@@ -211,6 +227,7 @@
     photosByStop.forEach(l => { photos += l.length; });
     let notes = 0;
     entries.forEach(e => { if (e.note && e.note.trim()) notes++; });
+    if (serverError && $('#btn-key')) { updateStorage(); return; }   // 비밀번호 안내 배너는 유지
     $('#hero-stats').textContent = serverError
       ? `⚠ 사진 서버에 연결할 수 없어요. ${serverError}`
       : (photos || notes)
@@ -885,9 +902,29 @@
     let resizeTimer = null;
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => { $$('textarea.note').forEach(autosize); fitTitle(); }, 150);
+      resizeTimer = setTimeout(() => { $$('textarea.note').forEach(autosize); fitTitle(); layoutTimelines(); }, 150);
     });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { $$('textarea.note').forEach(autosize); fitTitle(); });
+  }
+
+  // 비밀번호가 없거나 틀릴 때: 표지 통계 줄에 안내와 입력 버튼을 보여준다 (자동 대화상자 없음).
+  function showKeyBanner(wrong) {
+    serverError = wrong ? '비밀번호가 맞지 않아요.' : '사진·기록을 보려면 비밀번호 링크로 열거나 비밀번호를 입력하세요.';
+    const el = $('#hero-stats');
+    el.innerHTML = `${esc(serverError)} <button type="button" class="btn btn-ghost btn-key" id="btn-key">비밀번호 입력</button>`;
+    $('#btn-key').addEventListener('click', async () => {
+      try {
+        await RemoteStore.askKey(wrong ? '비밀번호가 맞지 않아요. 다시 입력해 주세요' : undefined);
+        serverError = '';
+        await loadData();
+        renderAll();
+        toast('연결됐어요');
+      } catch (err) {
+        if (err.code === 'NO_KEY') return;
+        console.error(err);
+        showKeyBanner(err.code === 'UNAUTHORIZED' || err.code === 'BAD_KEY');
+      }
+    });
   }
 
   // ---------- 시작 ----------
@@ -903,10 +940,14 @@
       await loadData();
     } catch (err) {
       console.error(err);
-      if (REMOTE) serverError = err.message || '';
-      toast(REMOTE
-        ? `사진 서버에 연결할 수 없어요 (${err.message}). 서버 PC 가 켜져 있는지, 비밀번호가 맞는지 확인해 주세요.`
-        : '브라우저 저장소를 열 수 없어요. 시크릿 모드이거나 저장소가 차단된 것 같아요.', 0);
+      if (REMOTE && (err.code === 'NO_KEY' || err.code === 'UNAUTHORIZED')) {
+        showKeyBanner(err.code === 'UNAUTHORIZED');   // 대화상자 대신 화면 안내 + 버튼
+      } else {
+        if (REMOTE) serverError = err.message || '';
+        toast(REMOTE
+          ? `사진 서버에 연결할 수 없어요 (${err.message}). 서버 PC 가 켜져 있는지 확인해 주세요.`
+          : '브라우저 저장소를 열 수 없어요. 시크릿 모드이거나 저장소가 차단된 것 같아요.', 0);
+      }
     }
     renderAll();
     initMap();   // 온라인일 때만 지도가 뜬다. 실패해도 나머지는 그대로 동작.
