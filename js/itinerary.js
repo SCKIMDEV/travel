@@ -29,7 +29,8 @@ const ITINERARY = {
       stops: [
         { id: "chahyunhee-sundubu", name: "차현희 순두부청국장", en: "CHAHYUNHEE SUNDUBU",   next: "도보 2분",  lat: 37.791050, lng: 128.916170 },   // 초당동 본점
         { id: "sundubu-gelato",     name: "순두부 젤라또",       en: "SUNDUBU GELATO",       next: "도보 9분",  lat: 37.791710, lng: 128.915470 },   // 1호점 (초당 본점)
-        { id: "gangmun-beach",      name: "강문해변",            en: "GANGMUN BEACH",        next: "차 20분",  lat: 37.796790, lng: 128.916860 },   // 강문솟대다리 남단 광장
+        { id: "gangmun-beach",      name: "강문해변",            en: "GANGMUN BEACH",        next: "도보 7분",  lat: 37.796790, lng: 128.916860 },   // 강문솟대다리 남단 광장
+        { id: "toetmaru",           name: "툇마루",              en: "CAFE TOETMARU",        next: "차 20분",  lat: 37.792891, lng: 128.914476 },   // 카페 툇마루 (난설헌로 232, 네이버 플레이스 998885728)
         { id: "horin-park",         name: "호린파크",            en: "HORIN PARK",           next: "차 10분",  lat: 37.844430, lng: 128.865620 },   // 사천면 (경포대허브농장)
         { id: "terarosa",           name: "테라로사",            en: "TERAROSA SACHEON",     next: "차 15분",  lat: 37.822400, lng: 128.885040, approx: true },   // 사천점 기준. 다른 지점이면 좌표 수정 (구정 본점 37.696338, 128.892412 / 경포점은 검색)
         { id: "hotel-checkin",      name: "신라모노그램 체크인",  en: "SHILLA MONOGRAM · CHECK-IN", next: "차 10분", ...HOTEL },

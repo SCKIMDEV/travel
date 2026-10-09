@@ -219,6 +219,7 @@ h1, h2, h3, p { margin: 0; }
   font: 500 14px/1.25 var(--sans); color: var(--ink); cursor: pointer;
 }
 .tl-label:hover { text-decoration: underline; text-underline-offset: 5px; }
+.tl-label.is-tight { overflow-wrap: anywhere; }   /* app.js fitLabels: 줄여도 칸을 넘는 긴 이름 */
 .tl-transit {
   position: absolute; left: 100%; top: 68px; transform: translateX(-50%);
   white-space: nowrap; font-size: 11px; color: var(--muted); letter-spacing: .01em;
@@ -373,12 +374,18 @@ h1, h2, h3, p { margin: 0; }
   .day-main { padding: 12px 16px 36px; }
   .timeline { padding: 0 4px; }
   .tl-stop { min-width: 112px; }
-  /* 좁은 화면: 두 줄로 접는다 (app.js layoutTimelines 가 is-wrapped / row-end 를 붙인다) */
-  .timeline.is-wrapped { flex-wrap: wrap; height: auto; overflow: visible; }
+  /* 좁은 화면: ㄹ자 두 줄로 접는다 (app.js layoutTimelines 가 칸 위치와 is-wrapped / row-end / row-rev 를 정한다) */
+  .timeline.is-wrapped { display: grid; height: auto; overflow: visible; padding-right: 20px; }
   .timeline.is-wrapped .tl-stop { min-width: 0; height: 112px; }
-  .timeline.is-wrapped .tl-stop.row-end::before { display: none; }
-  .timeline.is-wrapped .tl-stop.row-end .tl-transit { left: 50%; top: 84px; }   /* 줄이 바뀌는 지점: 점 아래 둘째 줄에 */
-  .timeline.is-wrapped .tl-stop.row-end .tl-transit::before { content: "↓ "; }
+  /* 첫째 줄 끝 → 바로 아래 둘째 줄 첫 장소: 오른쪽 여백으로 둥글게 꺾이는 U자 선 (이름과 겹치지 않도록 칸 밖으로) */
+  .timeline.is-wrapped .tl-stop.row-end::before {
+    left: 50%; right: -16px; top: 56px; height: 113px;
+    background: none; border: 1px solid var(--line); border-left: 0; border-radius: 0 28px 28px 0;
+  }
+  .timeline.is-wrapped .tl-stop.row-end .tl-transit { left: auto; right: -10px; top: 98px; transform: translateY(-50%); }   /* 둘째 줄 이름(위로 자람)과 떨어지게 위쪽에 */
+  /* 둘째 줄은 오른쪽 → 왼쪽: 선과 이동시간을 왼쪽 이웃 쪽에 둔다 */
+  .timeline.is-wrapped .tl-stop.row-rev::before { left: -50%; right: 50%; }
+  .timeline.is-wrapped .tl-stop.row-rev .tl-transit { left: 0; }
   .timeline.is-wrapped .tl-label { font-size: 13px; }
   .stop { padding: 14px 14px 6px; }
   .stop-name { font-size: 17px; }

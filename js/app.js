@@ -90,7 +90,8 @@
     }
   }
 
-  // 좁은 화면에서는 타임라인을 두 줄로 접는다. 줄 끝 장소의 이동시간은 점 아래에 둔다.
+  // 좁은 화면에서는 타임라인을 ㄹ자 두 줄로 접는다: 첫째 줄은 왼쪽→오른쪽, 둘째 줄은 오른쪽→왼쪽.
+  // 첫째 줄 마지막 장소 바로 아래에 다음 장소가 오고, 둘을 U자 선으로 잇는다 (row-end). 읽는 순서(DOM)는 그대로다.
   function layoutTimelines() {
     const narrow = window.innerWidth <= 760;
     $$('.timeline').forEach(tl => {
@@ -98,11 +99,60 @@
       const wrap = narrow && items.length > 3;
       tl.classList.toggle('is-wrapped', wrap);
       const perRow = wrap ? Math.ceil(items.length / 2) : 0;
+      tl.style.gridTemplateColumns = wrap ? `repeat(${perRow}, minmax(0, 1fr))` : '';
       items.forEach((el, i) => {
-        el.style.flexBasis = wrap ? `${100 / perRow}%` : '';
+        const second = wrap && i >= perRow;
+        el.style.gridRow = wrap ? (second ? '2' : '1') : '';
+        el.style.gridColumn = wrap ? String(second ? perRow - (i - perRow) : i + 1) : '';
         el.classList.toggle('row-end', wrap && i === perRow - 1 && i !== items.length - 1);
+        el.classList.toggle('row-rev', second);
       });
+      fitLabels(tl);
     });
+  }
+  // 장소 이름 맞추기 (한글 이름이 단어 중간에서 끊기지 않도록):
+  //  1) 칸보다 긴 단어가 있으면 이름 상자를 그 단어 폭까지 넓혀 점 위 가운데에 둔다 (옆 칸 여백으로 조금 넘침)
+  //  2) 그래도 이웃 이름과 닿으면 더 넓은 쪽 글자를 1px 씩 최대 2px 줄인다
+  //  3) 그래도 닿으면 마지막 수단으로 단어 중간 줄바꿈(is-tight)
+  function fitLabels(tl) {
+    const labs = $$('.tl-label', tl);
+    if (!labs.length) return;
+    labs.forEach(l => { l.style.fontSize = ''; l.style.maxWidth = ''; l.classList.remove('is-tight'); });
+    const base = parseFloat(getComputedStyle(labs[0]).fontSize) || 14;
+    const lines = l => { const r = document.createRange(); r.selectNodeContents(l); return [...r.getClientRects()]; };
+    const box = l => { const r = document.createRange(); r.selectNodeContents(l); return r.getBoundingClientRect(); };
+    const widen = l => {
+      const widest = Math.max(0, ...lines(l).map(r => r.width));
+      if (widest > l.clientWidth - 4 + 0.5) l.style.maxWidth = `${Math.ceil(widest) + 4}px`;   // 좌우 padding 2px 씩
+    };
+    const GAP = 4;
+    const touch = (a, b) => {
+      const p = box(a), q = box(b);
+      return p.right + GAP > q.left && q.right + GAP > p.left && p.bottom > q.top && q.bottom > p.top;
+    };
+    const shrink = l => {
+      const size = parseFloat(l.style.fontSize) || base;
+      if (size <= base - 2) return false;
+      l.style.fontSize = `${size - 1}px`; l.style.maxWidth = ''; widen(l);
+      return true;
+    };
+    const tighten = l => {
+      if (l.classList.contains('is-tight')) return false;
+      l.classList.add('is-tight'); l.style.maxWidth = '';
+      return true;
+    };
+    labs.forEach(widen);
+    for (let pass = 0; pass < 8; pass++) {
+      let changed = false;
+      for (let i = 0; i < labs.length; i++) {
+        for (let j = i + 1; j < labs.length; j++) {
+          if (!touch(labs[i], labs[j])) continue;
+          const [a, b] = box(labs[i]).width >= box(labs[j]).width ? [labs[i], labs[j]] : [labs[j], labs[i]];
+          if (shrink(a) || shrink(b) || tighten(a) || tighten(b)) changed = true;   // 넓은 쪽 → 이웃 → 단어 끊기 순
+        }
+      }
+      if (!changed) break;
+    }
   }
 
   function renderDay(day) {
@@ -871,7 +921,7 @@
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => { $$('textarea.note').forEach(autosize); fitTitle(); layoutTimelines(); }, 150);
     });
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { $$('textarea.note').forEach(autosize); fitTitle(); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { $$('textarea.note').forEach(autosize); fitTitle(); layoutTimelines(); });
   }
 
   // ---------- 시작 ----------
