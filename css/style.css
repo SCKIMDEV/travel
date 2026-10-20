@@ -56,6 +56,36 @@ h1, h2, h3, p { margin: 0; }
 }
 .nav-home:hover { background: var(--hair); color: var(--ink); }
 .nav-home svg { width: 16px; height: 16px; flex: none; }
+
+/* 상단 바 오른쪽: 사진 서버 연결 문제 알림 (js/net-alert.js). 올리거나(키보드 포커스) 누르면 안내가 펼쳐진다 */
+.net-alert { position: relative; flex: none; margin-left: auto; }
+.net-alert-btn {
+  display: grid; place-items: center; width: 44px; height: 44px; margin: -6px -10px -6px 0;
+  padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer;
+}
+.net-alert-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: -5px; }
+.net-alert-dot {
+  display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--red); color: #fff; font: 700 14px/1 var(--sans);
+  box-shadow: 0 0 0 3px rgba(178, 58, 42, .18);
+}
+.net-alert-msg {
+  display: none; position: absolute; top: calc(100% + 8px); right: -6px; z-index: 60;
+  width: min(320px, calc(100vw - 24px)); box-sizing: border-box; padding: 12px 14px;
+  background: var(--paper-2); border: 1px solid var(--hair-dark); border-radius: 6px;
+  box-shadow: 0 10px 24px -8px rgba(0, 0, 0, .25); text-align: left;
+}
+.net-alert-msg::before {   /* 아이콘을 가리키는 꼭지 */
+  content: ""; position: absolute; top: -6px; right: 22px; width: 10px; height: 10px;
+  background: var(--paper-2); border-left: 1px solid var(--hair-dark); border-top: 1px solid var(--hair-dark);
+  transform: rotate(45deg);
+}
+.net-alert.is-open .net-alert-msg, .net-alert-btn:focus-visible + .net-alert-msg { display: block; }
+@media (hover: hover) and (pointer: fine) { .net-alert:hover .net-alert-msg { display: block; } }
+.net-alert-title { font: 700 14px/1.4 var(--sans); color: var(--red); }
+.net-alert-body { margin-top: 4px; font: 400 13px/1.65 var(--sans); color: var(--ink-2); word-break: keep-all; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: no-preference) { .net-alert-dot { animation: net-alert-in .45s cubic-bezier(.3, 1.4, .5, 1) both; } }
+@keyframes net-alert-in { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .nav-days { display: flex; gap: 2px; margin: 0 auto; }
 .nav-days a {
   font: 400 12px/1.4 var(--serif); letter-spacing: .12em;

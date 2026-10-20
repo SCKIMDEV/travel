@@ -227,11 +227,7 @@
       if (r.status === 'fulfilled') fill(TRIPS[i], r.value);
       else { failed++; console.warn(TRIPS[i].id, r.reason); fill(TRIPS[i], null); }
     });
-    if (failed) {
-      const note = $('#home-note');
-      note.textContent = "사진을 불러오지 못했어요. Tailscale 이 켜진 기기라면 주소창 왼쪽 아이콘에서 '로컬 네트워크 액세스'를 허용하고 새로고침하세요. 그래도 안 되면 서버 PC 가 켜져 있는지 확인하세요.";
-      note.hidden = false;
-    }
+    if (failed && typeof NetAlert !== 'undefined') NetAlert.showPhotoServer();   // 상단 바의 붉은 ! (누르거나 올리면 안내)
   }
 
   // ---------- 터치 화면: 첫 탭에 펼치고, 펼친 다이어리를 다시 누르면 들어간다 ----------

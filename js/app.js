@@ -990,10 +990,12 @@
       await loadData();
     } catch (err) {
       console.error(err);
-      if (REMOTE) serverError = err.message || '';
-      toast(REMOTE
-        ? `사진 서버에 연결하지 못했어요 (${err.message}). Tailscale 이 켜진 기기라면 주소창 왼쪽 아이콘에서 '로컬 네트워크 액세스'를 허용하고 새로고침하세요. 그래도 안 되면 서버 PC 가 켜져 있는지 확인하세요.`
-        : '브라우저 저장소를 열 수 없어요. 시크릿 모드이거나 저장소가 차단된 것 같아요.', 0);
+      if (REMOTE) {
+        serverError = err.message || '';
+        if (typeof NetAlert !== 'undefined') NetAlert.showPhotoServer();   // 상단 바의 붉은 ! (누르거나 올리면 안내)
+      } else {
+        toast('브라우저 저장소를 열 수 없어요. 시크릿 모드이거나 저장소가 차단된 것 같아요.', 0);
+      }
     }
     renderAll();
     toHash();   // 위쪽에 사진이 들어와 자리가 밀렸으면 다시 맞춘다

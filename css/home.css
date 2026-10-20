@@ -19,11 +19,6 @@
 .home-title { font: 700 clamp(36px, 6vw, 56px)/1.1 var(--serif-kr); letter-spacing: -.01em; }
 .home-lede { margin-top: 12px; max-width: 30em; font: 400 16px/1.7 var(--serif-kr); color: var(--muted); }
 .home-count { font: 400 15px/1.4 var(--serif-kr); color: var(--ink-2); }
-.home-note {
-  margin-top: 24px; max-width: 46em; padding: 10px 14px;
-  border-left: 2px solid var(--red); background: var(--paper-2);
-  font: 400 14px/1.65 var(--serif-kr); color: var(--ink-2);
-}
 
 /* 책상: 다이어리 자리(펼쳤을 때 두 쪽이 들어갈 만큼) */
 .desk { margin-top: 40px; display: flex; flex-wrap: wrap; justify-content: center; gap: 24px 40px; }

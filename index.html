@@ -24,7 +24,6 @@
       </div>
       <p class="home-count" id="home-count"></p>
     </header>
-    <p class="home-note" id="home-note" role="status" hidden></p>
 
     <main class="desk" id="trip-list" aria-label="여행 다이어리"></main>
   </div>
@@ -32,6 +31,6 @@
   <noscript><p class="home-lede">여행 목록을 보려면 자바스크립트를 켜 주세요.</p></noscript>
 
   <script src="js/trips/manifest.js"></script>
-  <script>loadScripts([...tripScripts(), 'js/home.js']);</script>
+  <script>loadScripts([...tripScripts(), 'js/net-alert.js', 'js/home.js']);</script>
 </body>
 </html>

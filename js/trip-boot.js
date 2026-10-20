@@ -9,5 +9,5 @@
   if (!trip) { location.replace('index.html'); return; }
   window.ITINERARY = trip;
   document.title = `${trip.title} · Travel Diary`;
-  loadScripts(['js/db.js', 'js/remote.js', 'js/app.js']);
+  loadScripts(['js/db.js', 'js/remote.js', 'js/net-alert.js', 'js/app.js']);
 })();
