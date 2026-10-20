@@ -20,6 +20,12 @@ registerTrip((() => {
     storageKey: "tokyo-diary",
     brand: "Tokyo Diary",
     seal: "東京",
+    // 홈 화면의 다이어리 모양 (모두 선택): cover 표지 가죽색, ribbon 책갈피 끈 색, stamp 표지 도장 글자(없으면 seal),
+    // note 첫 장의 손글씨 한 줄, labels 지도 카드에 붙일 짧은 지명 { 장소 id: "이름" }
+    diary: {
+      cover: "#8a5b37", ribbon: "#1f3a44",
+      labels: { "narita-arrival": "나리타", "hotel-checkin": "신주쿠", "disneyland": "디즈니", "kamakurakokomae": "가마쿠라" }
+    },
     title: "TOKYO",
     period: "03.01 WED — 03.05 SUN",
     nights: "4박 5일",

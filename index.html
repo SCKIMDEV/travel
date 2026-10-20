@@ -7,7 +7,7 @@
   <meta name="description" content="다녀온 여행과 갈 여행의 동선, 사진, 기록">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Serif+KR:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/home.css">
 </head>
@@ -16,13 +16,18 @@
     <a class="nav-brand" href="./">Travel Diary</a>
   </nav>
 
-  <header class="home-head">
-    <h1 class="home-title">여행 기록</h1>
-    <p class="home-lede">여행을 고르면 그 여행의 동선과 사진이 열려요.</p>
+  <div class="home-wrap">
+    <header class="home-head">
+      <div>
+        <h1 class="home-title">여행 기록</h1>
+        <p class="home-lede" id="home-lede">다이어리에 마우스를 올리면 펼쳐져요. 누르면 그 여행의 지도와 사진이 열립니다.</p>
+      </div>
+      <p class="home-count" id="home-count"></p>
+    </header>
     <p class="home-note" id="home-note" role="status" hidden></p>
-  </header>
 
-  <main class="home-list" id="trip-list" aria-label="여행 목록"></main>
+    <main class="desk" id="trip-list" aria-label="여행 다이어리"></main>
+  </div>
 
   <noscript><p class="home-lede">여행 목록을 보려면 자바스크립트를 켜 주세요.</p></noscript>
 

@@ -1,134 +1,194 @@
 /* ==========================================================
-   홈 화면 — 여행 목록. 색·글꼴은 style.css 의 :root 를 그대로 쓴다.
-   여행마다 실제 좌표로 그린 동선 선이 카드의 얼굴이다.
+   홈 화면 — 여행 다이어리 서재. 색·글꼴은 style.css 의 :root 를 그대로 쓴다.
+   여행마다 가죽 표지 다이어리 한 권. 마우스를 올리면(터치: 첫 탭) 표지가 열린다.
    ========================================================== */
-.home-head,
-.home-list { max-width: 920px; margin: 0 auto; padding-left: 40px; padding-right: 40px; word-break: keep-all; overflow-wrap: anywhere; }   /* 한글 단어 중간에서 줄이 바뀌지 않게 */
-.home-head { padding-top: 68px; }
-.home-list { padding-bottom: 88px; }
-
-.home-title {
-  font: 600 clamp(46px, 9vw, 84px)/1.05 var(--serif-kr);
-  letter-spacing: -.01em;
+.home {
+  --page: #f8f6f0;
+  --label: #f4f0e6;
+  --kraft: #dccbaa;
+  --tape: rgba(222, 208, 170, .85);
+  --open: .9s cubic-bezier(.22, .7, .2, 1);
+  font-family: var(--serif-kr);
 }
-.home-lede { margin-top: 14px; max-width: 34em; font-size: 15px; color: var(--muted); }
+.home-wrap { max-width: 1200px; margin: 0 auto; padding: 0 32px 96px; word-break: keep-all; overflow-wrap: anywhere; }
+.home-head {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 40px;
+  padding-top: 56px;
+}
+.home-title { font: 700 clamp(36px, 6vw, 56px)/1.1 var(--serif-kr); letter-spacing: -.01em; }
+.home-lede { margin-top: 12px; max-width: 30em; font: 400 16px/1.7 var(--serif-kr); color: var(--muted); }
+.home-count { font: 400 15px/1.4 var(--serif-kr); color: var(--ink-2); }
 .home-note {
-  margin-top: 20px; max-width: 46em; padding: 10px 14px;
+  margin-top: 24px; max-width: 46em; padding: 10px 14px;
   border-left: 2px solid var(--red); background: var(--paper-2);
-  font-size: 13.5px; line-height: 1.6; color: var(--ink-2);
+  font: 400 14px/1.65 var(--serif-kr); color: var(--ink-2);
 }
 
-/* 묶음: 다가올 여행 / 연도 */
-.trip-group { margin-top: 52px; }
-.group-title {
-  display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
-  font: 500 30px/1 var(--serif); color: var(--ink);
-}
-.group-title::after { content: ""; flex: 1; height: 1px; background: var(--hair); }
-.group-title.is-word { font: 600 19px/1.2 var(--serif-kr); }
+/* 책상: 다이어리 자리(펼쳤을 때 두 쪽이 들어갈 만큼) */
+.desk { margin-top: 40px; display: flex; flex-wrap: wrap; justify-content: center; gap: 20px 40px; }
+.slot { width: 540px; max-width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.slot-caption { font: 400 14px var(--serif-kr); color: var(--muted); }
 
-/* 여행 카드 (카드 전체가 링크) */
-.trip {
-  display: grid;
-  grid-template-columns: 196px minmax(0, 1fr);
-  grid-template-rows: auto 1fr auto;
-  grid-template-areas: "route body" "route photos" "route stats";
-  column-gap: 28px;
-  padding: 20px; margin-bottom: 14px;
-  background: var(--paper-2); border: 1px solid var(--hair); border-radius: 3px;
-  color: inherit; text-decoration: none;
-  transition: border-color .2s;
+/* ---------- 다이어리 ---------- */
+.diary {
+  display: flex; align-items: center; justify-content: center;
+  width: 540px; height: 400px;
+  perspective: 2200px;
+  color: var(--ink); text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
 }
-.trip:hover { border-color: var(--hair-dark); }
-.trip:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.diary:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; border-radius: 8px; }
+.book { position: relative; width: 250px; height: 340px; transform-style: preserve-3d; transition: transform var(--open); }
+.book-shadow {
+  position: absolute; left: 6%; right: -4%; bottom: -16px; height: 22px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, .22), rgba(0, 0, 0, 0) 70%);
+}
+.cover {
+  position: absolute; inset: 0;
+  transform-origin: 0 50%; transform-style: preserve-3d;
+  transform: translateZ(1px) rotateY(0deg);
+  transition: transform var(--open);
+}
+.face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.face-back { transform: rotateY(180deg); }
 
-/* 동선 그림: 점 격자 종이 위에 잉크 선, 출발점은 붉은 점 */
-.trip-route {
-  grid-area: route; align-self: start;
-  margin: 0; aspect-ratio: 1;
-  background-color: var(--paper);
-  background-image: radial-gradient(circle, rgba(23, 23, 23, .13) .7px, transparent .9px);
-  background-size: 12px 12px; background-position: 6px 6px;
-  border: 1px solid var(--hair);
-}
-.route { display: block; width: 100%; height: 100%; overflow: visible; }
-.route-line {
-  fill: none; stroke: var(--ink); stroke-width: 1.1;
-  stroke-linejoin: round; stroke-linecap: round;
-  stroke-dasharray: 1; stroke-dashoffset: 0;
-  transition: stroke .25s;
-}
-.route-stop { fill: var(--paper); stroke: var(--ink); stroke-width: .7; }
-.route-end { fill: var(--paper); stroke: var(--ink); stroke-width: 1; }
-.route-start { fill: var(--red); }
-.trip:hover .route-line { stroke: var(--red); }
-
-.trip-body { grid-area: body; min-width: 0; }
-.trip-title {
-  font: 600 30px/1.15 "Playfair Display", "Noto Serif KR", serif;   /* 영문은 Playfair, 한글은 Noto Serif KR */
-  letter-spacing: .01em;
-}
-.trip-meta {
-  display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 8px;
-  font-size: 14px; color: var(--ink-2);
-}
-.trip-places { display: none; margin-top: 14px; font: 500 14px/1.65 var(--serif-kr); color: var(--muted); }
-.trip.no-photos .trip-places { display: block; }
-
-/* 사진 */
-.trip-photos {
-  grid-area: photos; align-self: start;
-  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px;
-  margin-top: 18px;
-}
-.ph { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 2px; background: var(--hair); }
-.ph-empty { opacity: .45; }
-.ph img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .35s; }
-.ph.is-loaded img { opacity: 1; }
-.ph[data-more]::after {
-  content: attr(data-more);
-  position: absolute; inset: 0; display: grid; place-items: center;
-  background: rgba(23, 23, 23, .5); color: #fff;
-  font: 500 16px var(--serif); letter-spacing: .04em;
+/* 펼치기: 표지가 왼쪽으로 넘어가고, 두 쪽이 자리 가운데 오도록 책이 오른쪽으로 반 권 이동 */
+.diary.is-open .book, .diary:focus-visible .book { transform: translateX(50%); }
+.diary.is-open .cover, .diary:focus-visible .cover { transform: translateZ(1px) rotateY(-180deg); }
+@media (hover: hover) and (pointer: fine) {
+  .diary:hover .book { transform: translateX(50%); }
+  .diary:hover .cover { transform: translateZ(1px) rotateY(-180deg); }
+  .diary:hover .cta { color: var(--red); border-color: var(--red); }
 }
 
-.trip-stats {
-  grid-area: stats; align-self: end;
-  display: flex; flex-wrap: wrap; gap: 4px 16px; padding-top: 14px;
-  font-size: 12.5px; color: var(--muted);
+/* 앞표지: 가죽, 종이 라벨, 도장, 고무줄 */
+.face-front {
+  border-radius: 3px 10px 10px 3px;
+  background-color: var(--cover);
+  background-image:
+    linear-gradient(90deg, rgba(0, 0, 0, .38) 0, rgba(0, 0, 0, .1) 13px, rgba(255, 255, 255, .07) 15px, rgba(0, 0, 0, 0) 22px),
+    radial-gradient(rgba(255, 255, 255, .05) 1px, rgba(0, 0, 0, 0) 1.2px);
+  background-size: 100% 100%, 4px 4px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06), 0 18px 30px -14px rgba(0, 0, 0, .5);
+}
+.label {
+  position: absolute; left: 38px; top: 50px; width: 160px; box-sizing: border-box;
+  padding: 14px 14px 16px; background: var(--label); border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+}
+.label-vol { font: italic 400 13px var(--serif); color: var(--muted); }
+.label-title { margin-top: 4px; font: 600 26px/1.15 "Playfair Display", "Noto Serif KR", serif; letter-spacing: .01em; color: var(--ink); }
+.label-date { margin-top: 8px; font: 400 13px/1.3 "Playfair Display", "Noto Serif KR", serif; color: var(--ink-2); }
+.stamp {
+  position: absolute; right: -14px; bottom: -16px; width: 42px; height: 42px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--red); color: var(--label); border-radius: 3px;
+  font: 700 14px/1 var(--serif-kr); transform: rotate(-8deg);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .25);
+}
+.deboss {
+  position: absolute; left: 38px; bottom: 30px;
+  font: 500 12px var(--serif-kr); letter-spacing: .3em; color: rgba(255, 255, 255, .34);
+}
+.elastic {
+  position: absolute; top: -3px; bottom: -3px; right: 26px; width: 7px; border-radius: 3px;
+  background: linear-gradient(90deg, #0b0b0b, #2c2c2c 45%, #0b0b0b);
+  box-shadow: -1px 0 2px rgba(0, 0, 0, .45);
 }
 
-/* 처음 열 때 한 번: 동선 선이 그려지고 장소 점이 나타난다 */
-@media (prefers-reduced-motion: no-preference) {
-  .route-line { animation: route-draw 1.5s cubic-bezier(.55, .05, .3, 1) both; animation-delay: calc(var(--i, 0) * .2s + .15s); }
-  .route-stop, .route-end { animation: route-dot .35s ease-out both; animation-delay: calc(var(--i, 0) * .2s + 1.35s); }
+/* 안쪽 표지: 크라프트지 위에 붙인 동선 지도 */
+.face-back {
+  display: flex; flex-direction: column; box-sizing: border-box; padding: 24px 22px 20px;
+  border-radius: 10px 3px 3px 10px;
+  background-color: var(--kraft);
+  background-image: linear-gradient(270deg, rgba(0, 0, 0, .18) 0, rgba(0, 0, 0, 0) 14px), radial-gradient(rgba(90, 66, 30, .09) 1px, rgba(0, 0, 0, 0) 1.3px);
+  background-size: 100% 100%, 5px 5px;
+  box-shadow: inset 0 0 0 7px var(--cover);
 }
-@keyframes route-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-@keyframes route-dot { from { opacity: 0; } to { opacity: 1; } }
+.map-card {
+  position: relative; padding: 8px;
+  background-color: var(--page);
+  background-image: radial-gradient(circle, rgba(23, 23, 23, .1) .8px, rgba(0, 0, 0, 0) 1px);
+  background-size: 12px 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .22); transform: rotate(-1.5deg);
+}
+.map-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.map-line { fill: none; stroke: var(--ink); stroke-width: 1.1; stroke-linejoin: round; stroke-linecap: round; }
+.map-stop { fill: var(--page); stroke: var(--ink); stroke-width: .7; }
+.map-end { fill: var(--page); stroke: var(--ink); stroke-width: 1; }
+.map-start { fill: var(--red); }
+.map-label {   /* 선·점 위에서도 읽히게 종이색 테두리를 먼저 칠한다 */
+  font: 400 9px "Nanum Pen Script", cursive; fill: var(--ink);
+  paint-order: stroke; stroke: var(--page); stroke-width: 2.4px; stroke-linejoin: round;
+}
+.tape { position: absolute; width: 36px; height: 12px; background: var(--tape); }
+.map-card .t1 { top: -6px; left: -10px; transform: rotate(-35deg); }
+.map-card .t2 { bottom: -4px; right: -10px; transform: rotate(-35deg); }
+.legend { display: flex; align-items: center; gap: 5px; font: 400 12px var(--serif-kr); color: var(--ink-2); }
+.key { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.key-start { background: var(--red); }
+.key-end { margin-left: 8px; width: 7px; height: 7px; border: 1px solid var(--ink); }
+.legend-sum { margin-left: auto; }
 
-/* ---------- 좁은 화면 ---------- */
-@media (max-width: 640px) {
-  .home-head, .home-list { padding-left: 16px; padding-right: 16px; }
-  .home-head { padding-top: 40px; }
-  .trip-group { margin-top: 40px; }
-  .group-title { font-size: 26px; margin-bottom: 12px; }
-  .group-title.is-word { font-size: 17px; }
-  .trip {
-    grid-template-columns: 92px minmax(0, 1fr);
-    grid-template-rows: auto auto auto;
-    grid-template-areas: "route body" "photos photos" "stats stats";
-    column-gap: 16px; padding: 14px;
-  }
-  .trip-title { font-size: 23px; }
-  .trip-meta { gap: 0 10px; margin-top: 6px; font-size: 13px; }
-  .trip-places { margin-top: 8px; font-size: 13px; }
-  .trip-photos { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 14px; }
-  .trip-photos .ph:nth-child(n + 5) { display: none; }
-  .ph[data-more]::after { content: none; }
-  .ph[data-more-narrow]::after {
-    content: attr(data-more-narrow);
-    position: absolute; inset: 0; display: grid; place-items: center;
-    background: rgba(23, 23, 23, .5); color: #fff; font: 500 15px var(--serif);
-  }
-  .trip-stats { padding-top: 10px; }
+/* 첫 장: 점 노트에 테이프로 붙인 사진, 또는 날짜별 일정 */
+.page {
+  position: absolute; inset: 0; box-sizing: border-box;
+  display: flex; flex-direction: column; padding: 22px 22px 18px;
+  border-radius: 2px 8px 8px 2px;
+  background-color: var(--page);
+  background-image: radial-gradient(circle, rgba(23, 23, 23, .11) .8px, rgba(0, 0, 0, 0) 1px);
+  background-size: 14px 14px; background-position: 7px 7px;
+  box-shadow: 1px 0 0 #e2ded4, 3px 1px 0 -1px var(--page), 4px 1px 0 -1px #d9d4c8, 6px 2px 0 -2px var(--page), 7px 2px 0 -2px #d2ccbf, 0 18px 30px -14px rgba(0, 0, 0, .35);
+}
+.page-meta { display: flex; justify-content: space-between; gap: 8px; font: 400 12px "Playfair Display", "Noto Serif KR", serif; color: var(--muted); }
+.page-body { margin-top: 12px; }
+.polaroids { position: relative; height: 160px; }
+.polaroid {
+  position: absolute; margin: 0; width: 100px; box-sizing: border-box;
+  padding: 6px 6px 16px; background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .18);
+}
+.polaroid.p1 { left: 0; top: 12px; transform: rotate(-4deg); }
+.polaroid.p2 { left: 104px; top: 0; transform: rotate(3.5deg); }
+.polaroid img, .polaroid .ph { display: block; width: 88px; height: 112px; object-fit: cover; background: #e6e2d8; }
+.polaroid img { opacity: 0; transition: opacity .4s; }
+.polaroid.is-loaded img { opacity: 1; }
+.polaroid .tape { top: -7px; left: 30px; width: 40px; height: 13px; transform: rotate(-5deg); }
+.polaroid.p2 .tape { left: 28px; transform: rotate(4deg); }
+.planned {
+  display: inline-block; padding: 3px 8px; border: 1.5px solid var(--red); border-radius: 3px;
+  font: 700 12px var(--serif-kr); color: var(--red); transform: rotate(-3deg);
+}
+.plan { margin-top: 14px; display: grid; grid-template-columns: 44px minmax(0, 1fr); row-gap: 7px; }
+.page-body[data-state="plan"] > .plan:first-child { margin-top: 2px; }
+.plan-day { font: italic 400 12px/1.6 var(--serif); color: var(--muted); }
+.plan-text { font: 400 13px/1.45 var(--serif-kr); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plan-more { color: var(--muted); }
+.hand { margin-top: 8px; min-height: 1.2em; font: 400 21px/1.2 "Nanum Pen Script", cursive; color: var(--ink-2); }
+.page-fill { flex: 1; }
+.stats { display: flex; gap: 10px; font: 500 13px var(--serif-kr); color: var(--ink-2); }
+.cta {
+  align-self: flex-end; margin-top: 8px; display: inline-flex; align-items: center; gap: 4px;
+  padding-bottom: 2px; border-bottom: 1px solid var(--ink);
+  font: 700 14px var(--serif-kr); color: var(--ink); transition: color .2s, border-color .2s;
+}
+.cta svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.ribbon {
+  position: absolute; left: 160px; bottom: -24px; width: 9px; height: 32px;
+  background: var(--ribbon); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book, .cover, .polaroid img, .cta { transition: none; }
+}
+
+/* ---------- 좁은 화면: 같은 다이어리를 줄여서 (펼친 두 쪽이 화면 폭에 들어가게) ---------- */
+@media (max-width: 620px) {
+  .home-wrap { padding: 0 16px 64px; }
+  .home-head { padding-top: 32px; }
+  .home-lede { font-size: 15px; }
+  .desk { margin-top: 20px; gap: 8px; }
+  .diary { zoom: .64; }
+}
+@media (max-width: 374px) {
+  .diary { zoom: .53; }
 }

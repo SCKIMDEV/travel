@@ -22,6 +22,13 @@ registerTrip((() => {
     title: "강릉여행",
     brand: "Gangneung Diary",
     seal: "",   // 오른쪽 위 붉은 도장 글자. 비우면 숨겨진다 (예: "江陵")
+    // 홈 화면의 다이어리 모양 (모두 선택): cover 표지 가죽색, ribbon 책갈피 끈 색, stamp 표지 도장 글자(없으면 seal),
+    // note 첫 장의 손글씨 한 줄, labels 지도 카드에 붙일 짧은 지명 { 장소 id: "이름" }
+    diary: {
+      cover: "#1f3a44", ribbon: "#b23a2a", stamp: "江陵",
+      note: "초당에서 중앙시장까지",
+      labels: { "chahyunhee-sundubu": "초당", "horin-park": "사천", "jungang-market": "중앙시장" }
+    },
     period: "10.18 SUN — 10.19 MON",
     nights: "1박 2일",
     days: [
