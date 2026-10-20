@@ -7,7 +7,7 @@
 const DB = (() => {
   'use strict';
 
-  // 여행마다 저장소를 따로 쓴다 (js/itinerary.js 의 storageKey). 예전 도쿄 데이터는 'tokyo-diary' 에 그대로 남는다.
+  // 여행마다 저장소를 따로 쓴다 (js/trips/<id>.js 의 storageKey). 예전 도쿄 데이터는 'tokyo-diary' 에 그대로 남는다.
   const NAME = (typeof ITINERARY !== 'undefined' && ITINERARY.storageKey) || 'travel-diary';
   const VERSION = 1;
   const STORES = ['photos', 'entries', 'meta'];

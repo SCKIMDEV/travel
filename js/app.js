@@ -1,5 +1,5 @@
 /*
- * Travel Diary — 화면 구성과 상호작용 (여행 내용은 js/itinerary.js 에서 온다)
+ * Travel Diary — 여행 한 개의 페이지 (trip.html). 여행 내용은 js/trips/<id>.js, 고르는 것은 js/trip-boot.js
  * 사진은 브라우저 안에서 리사이즈(JPEG)해 IndexedDB에 저장한다. 서버가 필요 없다.
  * 지도는 Leaflet + OpenStreetMap 타일을 온라인에서 불러오고, 실패하면 안내 문구만 보여준다.
  */
@@ -17,12 +17,13 @@
   const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
-  // 저장소: itinerary.js 의 server 주소(또는 ?server= 쿼리)가 있으면 서버, 없으면 브라우저 IndexedDB
+  // 저장소: 공통 설정(js/trips/manifest.js DIARY_CONFIG)이나 여행 파일의 server 주소(또는 ?server= 쿼리)가 있으면 서버, 없으면 브라우저 IndexedDB
   // ?server= 덮어쓰기는 로컬 테스트용. 공개 주소에서는 무시한다 (가짜 서버 링크로 비밀번호를 가로채지 못하도록).
   const LOCAL_HOST = ['localhost', '127.0.0.1', '[::1]', ''].includes(location.hostname);
-  const SERVER = (LOCAL_HOST && new URLSearchParams(location.search).get('server')) || ITINERARY.server || '';
+  const CONFIG = typeof DIARY_CONFIG !== 'undefined' ? DIARY_CONFIG : {};
+  const SERVER = (LOCAL_HOST && new URLSearchParams(location.search).get('server')) || (ITINERARY.server ?? CONFIG.server) || '';
   const REMOTE = !!SERVER && typeof RemoteStore !== 'undefined';
-  if (REMOTE) RemoteStore.configure(SERVER, ITINERARY.id || 'trip', ITINERARY.serverKey || '');
+  if (REMOTE) RemoteStore.configure(SERVER, ITINERARY.id || 'trip', ITINERARY.serverKey ?? CONFIG.serverKey ?? '');
   const STORE = REMOTE ? RemoteStore : DB;
   const toBlob = async x => {   // 서버 모드에서는 URL 을 받아온다
     if (x instanceof Blob) return x;
@@ -962,7 +963,7 @@
       console.error(err);
       if (REMOTE) serverError = err.message || '';
       toast(REMOTE
-        ? `사진 서버에 연결할 수 없어요 (${err.message}). 서버 PC 가 켜져 있는지 확인해 주세요.`
+        ? `사진 서버에 연결하지 못했어요 (${err.message}). Tailscale 이 켜진 기기라면 주소창 왼쪽 아이콘에서 '로컬 네트워크 액세스'를 허용하고 새로고침하세요. 그래도 안 되면 서버 PC 가 켜져 있는지 확인하세요.`
         : '브라우저 저장소를 열 수 없어요. 시크릿 모드이거나 저장소가 차단된 것 같아요.', 0);
     }
     renderAll();

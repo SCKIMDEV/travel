@@ -1,0 +1,134 @@
+/* ==========================================================
+   홈 화면 — 여행 목록. 색·글꼴은 style.css 의 :root 를 그대로 쓴다.
+   여행마다 실제 좌표로 그린 동선 선이 카드의 얼굴이다.
+   ========================================================== */
+.home-head,
+.home-list { max-width: 920px; margin: 0 auto; padding-left: 40px; padding-right: 40px; word-break: keep-all; overflow-wrap: anywhere; }   /* 한글 단어 중간에서 줄이 바뀌지 않게 */
+.home-head { padding-top: 68px; }
+.home-list { padding-bottom: 88px; }
+
+.home-title {
+  font: 600 clamp(46px, 9vw, 84px)/1.05 var(--serif-kr);
+  letter-spacing: -.01em;
+}
+.home-lede { margin-top: 14px; max-width: 34em; font-size: 15px; color: var(--muted); }
+.home-note {
+  margin-top: 20px; max-width: 46em; padding: 10px 14px;
+  border-left: 2px solid var(--red); background: var(--paper-2);
+  font-size: 13.5px; line-height: 1.6; color: var(--ink-2);
+}
+
+/* 묶음: 다가올 여행 / 연도 */
+.trip-group { margin-top: 52px; }
+.group-title {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
+  font: 500 30px/1 var(--serif); color: var(--ink);
+}
+.group-title::after { content: ""; flex: 1; height: 1px; background: var(--hair); }
+.group-title.is-word { font: 600 19px/1.2 var(--serif-kr); }
+
+/* 여행 카드 (카드 전체가 링크) */
+.trip {
+  display: grid;
+  grid-template-columns: 196px minmax(0, 1fr);
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas: "route body" "route photos" "route stats";
+  column-gap: 28px;
+  padding: 20px; margin-bottom: 14px;
+  background: var(--paper-2); border: 1px solid var(--hair); border-radius: 3px;
+  color: inherit; text-decoration: none;
+  transition: border-color .2s;
+}
+.trip:hover { border-color: var(--hair-dark); }
+.trip:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+/* 동선 그림: 점 격자 종이 위에 잉크 선, 출발점은 붉은 점 */
+.trip-route {
+  grid-area: route; align-self: start;
+  margin: 0; aspect-ratio: 1;
+  background-color: var(--paper);
+  background-image: radial-gradient(circle, rgba(23, 23, 23, .13) .7px, transparent .9px);
+  background-size: 12px 12px; background-position: 6px 6px;
+  border: 1px solid var(--hair);
+}
+.route { display: block; width: 100%; height: 100%; overflow: visible; }
+.route-line {
+  fill: none; stroke: var(--ink); stroke-width: 1.1;
+  stroke-linejoin: round; stroke-linecap: round;
+  stroke-dasharray: 1; stroke-dashoffset: 0;
+  transition: stroke .25s;
+}
+.route-stop { fill: var(--paper); stroke: var(--ink); stroke-width: .7; }
+.route-end { fill: var(--paper); stroke: var(--ink); stroke-width: 1; }
+.route-start { fill: var(--red); }
+.trip:hover .route-line { stroke: var(--red); }
+
+.trip-body { grid-area: body; min-width: 0; }
+.trip-title {
+  font: 600 30px/1.15 "Playfair Display", "Noto Serif KR", serif;   /* 영문은 Playfair, 한글은 Noto Serif KR */
+  letter-spacing: .01em;
+}
+.trip-meta {
+  display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 8px;
+  font-size: 14px; color: var(--ink-2);
+}
+.trip-places { display: none; margin-top: 14px; font: 500 14px/1.65 var(--serif-kr); color: var(--muted); }
+.trip.no-photos .trip-places { display: block; }
+
+/* 사진 */
+.trip-photos {
+  grid-area: photos; align-self: start;
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px;
+  margin-top: 18px;
+}
+.ph { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 2px; background: var(--hair); }
+.ph-empty { opacity: .45; }
+.ph img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .35s; }
+.ph.is-loaded img { opacity: 1; }
+.ph[data-more]::after {
+  content: attr(data-more);
+  position: absolute; inset: 0; display: grid; place-items: center;
+  background: rgba(23, 23, 23, .5); color: #fff;
+  font: 500 16px var(--serif); letter-spacing: .04em;
+}
+
+.trip-stats {
+  grid-area: stats; align-self: end;
+  display: flex; flex-wrap: wrap; gap: 4px 16px; padding-top: 14px;
+  font-size: 12.5px; color: var(--muted);
+}
+
+/* 처음 열 때 한 번: 동선 선이 그려지고 장소 점이 나타난다 */
+@media (prefers-reduced-motion: no-preference) {
+  .route-line { animation: route-draw 1.5s cubic-bezier(.55, .05, .3, 1) both; animation-delay: calc(var(--i, 0) * .2s + .15s); }
+  .route-stop, .route-end { animation: route-dot .35s ease-out both; animation-delay: calc(var(--i, 0) * .2s + 1.35s); }
+}
+@keyframes route-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes route-dot { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------- 좁은 화면 ---------- */
+@media (max-width: 640px) {
+  .home-head, .home-list { padding-left: 16px; padding-right: 16px; }
+  .home-head { padding-top: 40px; }
+  .trip-group { margin-top: 40px; }
+  .group-title { font-size: 26px; margin-bottom: 12px; }
+  .group-title.is-word { font-size: 17px; }
+  .trip {
+    grid-template-columns: 92px minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    grid-template-areas: "route body" "photos photos" "stats stats";
+    column-gap: 16px; padding: 14px;
+  }
+  .trip-title { font-size: 23px; }
+  .trip-meta { gap: 0 10px; margin-top: 6px; font-size: 13px; }
+  .trip-places { margin-top: 8px; font-size: 13px; }
+  .trip-photos { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 14px; }
+  .trip-photos .ph:nth-child(n + 5) { display: none; }
+  .ph[data-more]::after { content: none; }
+  .ph[data-more-narrow]::after {
+    content: attr(data-more-narrow);
+    position: absolute; inset: 0; display: grid; place-items: center;
+    background: rgba(23, 23, 23, .5); color: #fff; font: 500 15px var(--serif);
+  }
+  .trip-stats { padding-top: 10px; }
+}

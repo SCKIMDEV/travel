@@ -1,7 +1,7 @@
 /*
- * 서버 저장소 — js/itinerary.js 에 server 주소가 있을 때 IndexedDB(DB) 대신 쓴다.
+ * 서버 저장소 — DIARY_CONFIG(js/trips/manifest.js)에 server 주소가 있을 때 IndexedDB(DB) 대신 쓴다.
  * DB 와 같은 메서드 이름을 가지며, 사진 객체의 full/thumb 는 Blob 대신 서버 파일 URL 문자열이다.
- * 서버 접속 키(X-Diary-Key)는 js/itinerary.js 의 serverKey 를 그대로 쓴다. 사용자에게 비밀번호를 묻지 않는다.
+ * 서버 접속 키(X-Diary-Key)는 js/trips/manifest.js 의 serverKey 를 그대로 쓴다. 사용자에게 비밀번호를 묻지 않는다.
  * 이미지 주소에는 접속 키 대신 서버가 내려준 읽기 전용 파일 토큰이 들어간다.
  */
 const RemoteStore = (() => {
@@ -25,11 +25,11 @@ const RemoteStore = (() => {
   const withUrls = meta => ({ ...meta, full: fileUrl(meta.id, 'full'), thumb: fileUrl(meta.id, 'thumb') });
 
   async function request(method, pathname, { body, headers = {} } = {}) {
-    if (!key) throw Object.assign(new Error('서버 접속 키가 없어요 (js/itinerary.js 의 serverKey)'), { code: 'NO_KEY' });
+    if (!key) throw Object.assign(new Error('서버 접속 키가 없어요 (js/trips/manifest.js 의 serverKey)'), { code: 'NO_KEY' });
     const init = { method, headers: { 'X-Diary-Key': key, ...headers }, body };
     if (typeof body === 'string' && new Blob([body]).size < 60000) init.keepalive = true;   // 페이지를 떠날 때도 저장되도록
     const res = await fetch(`${base}/api/${trip}/${pathname}`, init);
-    if (res.status === 401) throw Object.assign(new Error('서버 접속 키가 맞지 않아요 (js/itinerary.js 의 serverKey 와 서버의 DIARY_KEY 확인)'), { code: 'UNAUTHORIZED' });
+    if (res.status === 401) throw Object.assign(new Error('서버 접속 키가 맞지 않아요 (js/trips/manifest.js 의 serverKey 와 서버의 DIARY_KEY 확인)'), { code: 'UNAUTHORIZED' });
     if (res.status === 429) throw new Error('요청이 잠시 막혔어요. 몇 분 뒤 다시 시도해 주세요');
     if (!res.ok) {
       let msg = `서버 오류 (${res.status})`;
