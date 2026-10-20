@@ -42,12 +42,10 @@ const ITINERARY = {
     {
       id: "day2", label: "DAY 2", date: "10.19", weekday: "MON",
       stops: [
-        { id: "gossine-makguksu",   name: "고씨네 동해 막국수",   en: "GOSSINE MAKGUKSU",     next: "차 10분",  lat: 37.796280, lng: 128.917150 },   // 강문 본점
-        { id: "duding",             name: "두딩",                en: "DUDING",               next: "도보 2분",  lat: 37.758090, lng: 128.892120 },   // 교동 두부푸딩
-        { id: "boiled-potato",      name: "삶은 감자",           en: "SALMEUN GAMJA",        next: "도보 1분",  lat: 37.758940, lng: 128.891710 },   // 감자 소품숍
-        { id: "zamo-pajama",        name: "자모파자마",          en: "ZAMOPAJAMA",           next: "도보 2분",  lat: 37.759660, lng: 128.892200 },   // 파자마 매장
-        { id: "cafe-pino",          name: "카페피노",            en: "CAFE PINO",            next: "차 40분",  lat: 37.758340, lng: 128.892370 },
-        { id: "daegwallyeong-sheep", name: "대관령 양떼목장",     en: "DAEGWALLYEONG SHEEP FARM", next: "귀가",  lat: 37.686760, lng: 128.752840 },   // 매표소
+        { id: "gangmun-beach-2",    name: "강문해변",             en: "GANGMUN BEACH",       next: "차 10분",  lat: 37.796790, lng: 128.916860 },   // 1일차 강문해변과 같은 곳 (지도에서는 핀 하나로 묶임)
+        { id: "jungang-market-2",   name: "강릉 중앙시장",          en: "JUNGANG MARKET",      next: "도보 1분",  lat: 37.754150, lng: 128.898680 },   // 1일차와 같은 금성로 정문
+        { id: "gilgamja",           name: "길감자",              en: "GANGNEUNG GILGAMJA",  next: "도보 1분",  lat: 37.754647, lng: 128.898628 },   // 강릉길감자 본점 (금성로 16, 중앙시장 금성로 입구 옆. 2026-05 중앙시장2길에서 이전)
+        { id: "gamja-ongsimi",      name: "감자옹심이",            en: "GAMJA ONGSIMI",       next: "귀가",     lat: 37.755110, lng: 128.898179 },   // 감자옹심이 (금성로14번길 9-1, 수요일 휴무)
         { id: "go-home",            name: "집으로 이동",          en: "HOME" }
       ]
     }
