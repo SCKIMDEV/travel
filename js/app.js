@@ -25,6 +25,7 @@
   const REMOTE = !!SERVER && typeof RemoteStore !== 'undefined';
   if (REMOTE) RemoteStore.configure(SERVER, ITINERARY.id || 'trip', ITINERARY.serverKey ?? CONFIG.serverKey ?? '');
   const STORE = REMOTE ? RemoteStore : DB;
+  const PLANNED = !!ITINERARY.planned || !ITINERARY.start;   // 다가올 여행 (home.js 와 같은 기준)
   const toBlob = async x => {   // 서버 모드에서는 URL 을 받아온다
     if (x instanceof Blob) return x;
     const res = await fetch(x);
@@ -199,7 +200,7 @@
         </header>
         <div class="photos" data-role="photos"></div>
         <div class="note-wrap">
-          <textarea class="note" rows="1" placeholder="이곳에서의 기록을 남겨보세요"
+          <textarea class="note" rows="1" placeholder="${PLANNED ? '가기 전에 알아둘 것 (예약, 영업시간, 메뉴)' : '이곳에서의 기록을 남겨보세요'}"
                     aria-label="${esc(s.name)} 기록" data-field="note" data-entry="${s.id}"></textarea>
           <span class="save-state" data-role="save"></span>
         </div>
@@ -217,7 +218,7 @@
           <div class="day-memo">
             <span class="memo-label">${esc(day.label)} · MEMO</span>
             <div class="note-wrap">
-              <textarea class="note" rows="1" placeholder="오늘 하루는 어땠나요?"
+              <textarea class="note" rows="1" placeholder="${PLANNED ? '이날 챙길 것, 예약 번호' : '오늘 하루는 어땠나요?'}"
                         aria-label="${esc(day.label)} 메모" data-field="note" data-entry="memo:${day.id}"></textarea>
               <span class="save-state" data-role="save"></span>
             </div>
@@ -270,7 +271,9 @@
     const wrap = $('[data-role="photos"]', card);
     const list = photosByStop.get(stopId) || [];
     if (!list.length) {
-      wrap.innerHTML = `<button class="dropzone" type="button" data-action="add" data-stop="${stopId}">${CAMERA_SVG}<span>사진을 끌어다 놓거나 클릭해서 추가하세요</span></button>`;
+      if (PLANNED) { wrap.innerHTML = ''; return; }   // 다가올 여행: 사진 칸 대신 위의 '+ 사진' 버튼만
+      const label = window.matchMedia('(pointer: coarse)').matches ? '눌러서 사진 추가하기' : '사진을 끌어다 놓거나 클릭해서 추가하세요';
+      wrap.innerHTML = `<button class="dropzone" type="button" data-action="add" data-stop="${stopId}">${CAMERA_SVG}<span>${label}</span></button>`;
       return;
     }
     wrap.innerHTML = `<div class="photo-grid">${list.map((p, i) => `
@@ -439,7 +442,11 @@
     if (!list.length) { closeLightbox(); return; }
     lightbox.index = Math.max(0, Math.min(lightbox.index, list.length - 1));
     const p = list[lightbox.index];
-    lb.img.src = urlFor(p, 'full');
+    const full = urlFor(p, 'full');
+    lb.img.src = urlFor(p, 'thumb');
+    const pre = new Image();
+    pre.onload = () => { if (!lb.el.hidden && currentPhoto() === p) lb.img.src = full; };
+    pre.src = full;
     lb.img.alt = p.caption || stopName(lightbox.stopId);
     lb.title.textContent = stopName(lightbox.stopId);
     lb.count.textContent = `${lightbox.index + 1} / ${list.length}`;
@@ -919,6 +926,17 @@
     lb.el.addEventListener('click', e => {
       if (e.target === lb.el || e.target.classList.contains('lb-figure')) closeLightbox();
     });
+    let swipeX = null, swipeY = 0;   // 휴대폰: 사진을 좌우로 밀어 이전/다음
+    lb.el.addEventListener('touchstart', e => {
+      swipeX = e.touches.length === 1 && e.target.closest('.lb-figure') ? e.touches[0].clientX : null;
+      swipeY = e.touches[0].clientY;
+    }, { passive: true });
+    lb.el.addEventListener('touchend', e => {
+      if (swipeX === null) return;
+      const dx = e.changedTouches[0].clientX - swipeX, dy = e.changedTouches[0].clientY - swipeY;
+      swipeX = null;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > 1.5 * Math.abs(dy)) stepLightbox(dx < 0 ? 1 : -1);
+    }, { passive: true });
     document.addEventListener('keydown', e => {
       if (lb.el.hidden) return;
       if (e.key === 'Escape') {

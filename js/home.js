@@ -240,7 +240,7 @@
     const list = $('#trip-list');
     list.addEventListener('click', e => {
       const diary = e.target.closest('.diary');
-      if (!diary || diary.classList.contains('is-open')) return;   // 이미 펼쳐져 있으면 링크대로 이동
+      if (!diary || diary.classList.contains('is-open') || e.detail === 0) return;   // 이미 펼쳐져 있거나 키보드·보조기기로 누르면 링크대로 이동
       e.preventDefault();
       $$('.diary.is-open', list).forEach(d => d.classList.remove('is-open'));
       diary.classList.add('is-open');
