@@ -3,6 +3,7 @@
    여행마다 가죽 표지 다이어리 한 권. 마우스를 올리면(터치: 첫 탭) 표지가 열린다.
    ========================================================== */
 .home {
+  --nav-h: 56px;   /* 상단 바가 한 줄뿐이라 휴대폰에서도 56px (style.css 의 휴대폰 88px 는 여행 페이지의 두 줄용) */
   --page: #f8f6f0;
   --label: #f4f0e6;
   --kraft: #dccbaa;
@@ -86,6 +87,12 @@
   font: 700 14px/1 var(--serif-kr); transform: rotate(-8deg);
   box-shadow: 0 1px 1px rgba(0, 0, 0, .25);
 }
+/* D+ 도장: 작은 "D+" 위에 날수 */
+.stamp-dday {
+  flex-direction: column; gap: 1px; width: auto; min-width: 46px; height: 46px; padding: 0 6px; box-sizing: border-box;
+  font: 600 18px/1 var(--serif); letter-spacing: .01em;
+}
+.stamp-dday small { font: 600 10px/1 var(--serif); letter-spacing: .06em; opacity: .9; }
 .deboss {
   position: absolute; left: 38px; bottom: 30px;
   font: 500 12px var(--serif-kr); letter-spacing: .3em; color: rgba(255, 255, 255, .34);

@@ -20,7 +20,7 @@ registerTrip((() => {
     storageKey: "tokyo-diary",
     brand: "Tokyo Diary",
     seal: "東京",
-    // 홈 화면의 다이어리 모양 (모두 선택): cover 표지 가죽색, ribbon 책갈피 끈 색, stamp 표지 도장 글자(없으면 seal),
+    // 홈 화면의 다이어리 모양 (모두 선택): cover 표지 가죽색, ribbon 책갈피 끈 색, stamp 표지 도장 글자(D+ 를 셀 수 없을 때만, 없으면 seal),
     // note 첫 장의 손글씨 한 줄, labels 지도 카드에 붙일 짧은 지명 { 장소 id: "이름" }
     diary: {
       cover: "#8a5b37", ribbon: "#1f3a44",

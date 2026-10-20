@@ -6,7 +6,7 @@
   'use strict';
   const id = new URLSearchParams(location.search).get('trip');
   const trip = TRIPS.find(t => t.id === id);
-  if (!trip) { location.replace('./'); return; }
+  if (!trip) { location.replace('index.html'); return; }
   window.ITINERARY = trip;
   document.title = `${trip.title} · Travel Diary`;
   loadScripts(['js/db.js', 'js/remote.js', 'js/app.js']);

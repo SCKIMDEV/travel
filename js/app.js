@@ -957,6 +957,17 @@
     buildStatic();
     bindEvents();
     setupNavHighlight();
+    // 주소에 #day2, #stop-<id> 가 있으면 그곳으로. 페이지 내용을 스크립트로 그리므로 브라우저가 대신 해 주지 않는다.
+    // 사진·글꼴이 들어와 위쪽 높이가 바뀌면 다시 맞추되, 사용자가 직접 움직이기 시작하면 더는 건드리지 않는다.
+    let hashTarget = null;
+    try { hashTarget = location.hash ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null; } catch { hashTarget = null; }
+    let userMoved = false;
+    const toHash = () => { if (hashTarget && !userMoved) hashTarget.scrollIntoView({ behavior: 'instant', block: 'start' }); };
+    if (hashTarget) {
+      ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(t => window.addEventListener(t, () => { userMoved = true; }, { once: true, passive: true }));
+      toHash();
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => requestAnimationFrame(toHash));
+    }
     try {
       await loadData();
     } catch (err) {
@@ -967,6 +978,7 @@
         : '브라우저 저장소를 열 수 없어요. 시크릿 모드이거나 저장소가 차단된 것 같아요.', 0);
     }
     renderAll();
+    toHash();   // 위쪽에 사진이 들어와 자리가 밀렸으면 다시 맞춘다
     initMap();   // 온라인일 때만 지도가 뜬다. 실패해도 나머지는 그대로 동작.
   }
 

@@ -41,6 +41,13 @@
     return f[0] === l[0] ? `${f[0]}월 ${f[1]}일 — ${l[1]}일` : `${f[0]}월 ${f[1]}일 — ${l[0]}월 ${l[1]}일`;
   }
   const isPlanned = trip => !!trip.planned || !trip.start;
+  // D+ : 기준일(DIARY_CONFIG.dday)이 D+1. 날짜만 비교하도록 UTC 자정으로 센다. 셀 수 없으면 null.
+  function dPlus(trip) {
+    const base = ymd(CONFIG.dday), day = ymd(trip.start);
+    if (!base || !day || base.some(Number.isNaN) || day.some(Number.isNaN)) return null;
+    const n = Math.round((Date.UTC(day[0], day[1] - 1, day[2]) - Date.UTC(base[0], base[1] - 1, base[2])) / 86400000) + 1;
+    return n >= 1 ? n : null;
+  }
   const caption = trip => {
     if (isPlanned(trip)) return '다가올 여행';
     const a = ymd(trip.start);
@@ -99,13 +106,14 @@
     const look = trip.diary || {};
     const cover = look.cover || COVERS[i % COVERS.length];
     const ribbon = look.ribbon || RIBBONS[i % RIBBONS.length];
-    const stamp = look.stamp ?? trip.seal ?? '';
+    const dp = dPlus(trip);
+    const stamp = dp ? '' : (look.stamp ?? trip.seal ?? '');
     const places = placesOf(trip);
     const planned = isPlanned(trip);
     const days = trip.days.length;
     const href = `trip.html?trip=${encodeURIComponent(trip.id)}`;
     const date = coverDate(trip);
-    const label = `${trip.title} 다이어리. ${planned ? '다가올 여행, ' : ''}${date}, 장소 ${places.length}곳`;
+    const label = `${trip.title} 다이어리. ${planned ? '다가올 여행, ' : ''}${date}${dPlus(trip) ? `, D+${dPlus(trip)}` : ''}, 장소 ${places.length}곳`;
     return `
       <div class="slot" data-trip="${esc(trip.id)}">
         <a class="diary" href="${href}" aria-label="${esc(label)}" style="--cover:${esc(cover)};--ribbon:${esc(ribbon)}">
@@ -132,7 +140,7 @@
                   <p class="label-vol">No. ${vol}</p>
                   <p class="label-title">${esc(trip.title)}</p>
                   <p class="label-date">${esc(date)}</p>
-                  ${stamp ? `<span class="stamp">${esc(stamp)}</span>` : ''}
+                  ${dp ? `<span class="stamp stamp-dday"><small>D+</small>${dp}</span>` : stamp ? `<span class="stamp">${esc(stamp)}</span>` : ''}
                 </div>
                 ${trip.place ? `<p class="deboss">${esc(trip.place)}</p>` : ''}
                 <span class="elastic"></span>

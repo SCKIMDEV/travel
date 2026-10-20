@@ -10,6 +10,8 @@ const TRIP_FILES = ['gangneung', 'tokyo'];
 // 사진·기록을 기기 간에 공유하는 서버. server 를 비우면("") 각 브라우저 안(IndexedDB)에만 저장한다.
 // serverKey 가 여기 있으므로 비밀번호를 묻지 않는다 (주소를 아는 사람은 누구나 사진을 보고 올리고 지울 수 있음).
 const DIARY_CONFIG = {
+  // D+ 기준일: 이 날이 D+1. 홈 화면 다이어리 표지의 붉은 도장에 여행 첫날이 D+며칠인지 적힌다 (날짜를 모르는 여행은 도장 글자).
+  dday: "2026-07-26",
   server: "https://parking.tail7d1054.ts.net:8443",
   serverKey: "SgbvO4gEOnWbvhSyCPHByGDJspcNkMV9"
 };
